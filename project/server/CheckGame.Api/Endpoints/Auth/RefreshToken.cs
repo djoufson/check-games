@@ -13,7 +13,7 @@ public partial class Auth
         IValidator<RefreshTokenRequest> validator)
     {
         await validator.ValidateAndThrowAsync(request);
-        
+
         var jwtResponse = await jwtService.RefreshTokenAsync(request.AccessToken, request.RefreshToken);
         if (jwtResponse == null)
         {

@@ -19,9 +19,9 @@ public class GameHub : Hub<IGameClient>, IGameServer
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
-        
+
         _logger.LogInformation("User {UserName} ({UserId}) connected to GameHub", userName, userId);
-        
+
         await base.OnConnectedAsync();
     }
 
@@ -29,12 +29,12 @@ public class GameHub : Hub<IGameClient>, IGameServer
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
-        
+
         _logger.LogInformation("User {UserName} ({UserId}) disconnected from GameHub", userName, userId);
-        
+
         // Leave all game sessions when disconnected
         await LeaveAllGames();
-        
+
         await base.OnDisconnectedAsync(exception);
     }
 
@@ -51,8 +51,8 @@ public class GameHub : Hub<IGameClient>, IGameServer
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"GameSession_{sessionId}");
-        
-        _logger.LogInformation("User {UserName} ({UserId}) joined game session {SessionId}", 
+
+        _logger.LogInformation("User {UserName} ({UserId}) joined game session {SessionId}",
             userName, userId, sessionId);
 
         // Notify other players in the session
@@ -72,8 +72,8 @@ public class GameHub : Hub<IGameClient>, IGameServer
         }
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"GameSession_{sessionId}");
-        
-        _logger.LogInformation("User {UserName} ({UserId}) left game session {SessionId}", 
+
+        _logger.LogInformation("User {UserName} ({UserId}) left game session {SessionId}",
             userName, userId, sessionId);
 
         // Notify other players in the session
@@ -93,7 +93,7 @@ public class GameHub : Hub<IGameClient>, IGameServer
             return;
         }
 
-        _logger.LogInformation("User {UserName} ({UserId}) played card in session {SessionId}", 
+        _logger.LogInformation("User {UserName} ({UserId}) played card in session {SessionId}",
             userName, userId, sessionId);
 
         // Broadcast card play to all players in the session
@@ -112,7 +112,7 @@ public class GameHub : Hub<IGameClient>, IGameServer
             return;
         }
 
-        _logger.LogInformation("User {UserName} ({UserId}) drew card in session {SessionId}", 
+        _logger.LogInformation("User {UserName} ({UserId}) drew card in session {SessionId}",
             userName, userId, sessionId);
 
         // Broadcast card draw to all players in the session (default to 1 card drawn)
@@ -148,7 +148,7 @@ public class GameHub : Hub<IGameClient>, IGameServer
             return;
         }
 
-        _logger.LogInformation("User {UserName} ({UserId}) changed suit to {NewSuit} in session {SessionId}", 
+        _logger.LogInformation("User {UserName} ({UserId}) changed suit to {NewSuit} in session {SessionId}",
             userName, userId, newSuit, sessionId);
 
         // TODO: Integrate with game engine to validate and apply suit change

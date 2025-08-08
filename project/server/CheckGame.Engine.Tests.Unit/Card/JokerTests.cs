@@ -38,7 +38,7 @@ public class JokerTests
         var joker = jokerColor == Color.Red ? Models.Card.NewRedJoker() : Models.Card.NewBlackJoker();
         var redCard = Models.Card.NewCard(Suit.Hearts, Rank.King);
         var blackCard = Models.Card.NewCard(Suit.Spades, Rank.Queen);
-        
+
         var targetCard = jokerColor == Color.Red ? redCard : blackCard;
 
         // Act

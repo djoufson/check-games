@@ -65,7 +65,7 @@ public class AttackChainTests
 
         // Start attack chain with seven
         gameState.PlayCard("player1", sevenCard);
-        
+
         // Player 2 should now be able to defend with seven
         var player2SevenCard = Models.Card.NewCard(Suit.Spades, Rank.Seven);
 
@@ -125,7 +125,7 @@ public class AttackChainTests
         // Arrange
         var gameState = CreateTestGameState();
         var sevenCard = Models.Card.NewCard(Suit.Hearts, Rank.Seven);
-        
+
         // Add black joker to player 2
         var player2 = gameState.Players[1];
         player2.AddToHand(Models.Card.NewBlackJoker());
@@ -167,7 +167,7 @@ public class AttackChainTests
 
         // Act
         gameState.PlayCard("player1", firstCard);
-        
+
         if (expectedFinalAmount > 2)
         {
             var secondCard = Models.Card.NewCard(Suit.Spades, Rank.Seven);

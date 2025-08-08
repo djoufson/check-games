@@ -22,7 +22,7 @@ public static class Extensions
         // Configure options
         services.Configure<SignalROptions>(configuration.GetSection(SignalROptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
-        
+
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
         var signalROptions = configuration.GetSection(SignalROptions.SectionName).Get<SignalROptions>() ?? new SignalROptions();
 
@@ -53,7 +53,7 @@ public static class Extensions
 
         // Register custom services
         services.AddScoped<IJwtService, JwtService>();
-        
+
         // Register exception handling
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();

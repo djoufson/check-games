@@ -15,8 +15,8 @@ public class GlobalExceptionHandler : IExceptionHandler
     }
 
     public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext, 
-        Exception exception, 
+        HttpContext httpContext,
+        Exception exception,
         CancellationToken cancellationToken)
     {
         _logger.LogError(exception, "Exception occurred: {Message}", exception.Message);
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     }
 
     private static ProblemDetails CreateValidationProblemDetails(
-        HttpContext httpContext, 
+        HttpContext httpContext,
         ValidationException validationException)
     {
         var problemDetails = new ProblemDetails

@@ -62,7 +62,7 @@ public class SuitChangerTests
         // Arrange
         var gameState = CreateTestGameState();
         var diamondJack = Models.Card.NewCard(Suit.Diamonds, Rank.Jack);
-        
+
         // Play Jack first to lock turn
         gameState.PlayCard("player1", diamondJack);
 
@@ -96,7 +96,7 @@ public class SuitChangerTests
         // Arrange
         var gameState = CreateTestGameState();
         var diamondJack = Models.Card.NewCard(Suit.Diamonds, Rank.Jack);
-        
+
         // Play Jack to lock turn
         gameState.PlayCard("player1", diamondJack);
 
@@ -113,7 +113,7 @@ public class SuitChangerTests
         // Arrange
         var gameState = CreateTestGameState();
         var diamondJack = Models.Card.NewCard(Suit.Diamonds, Rank.Jack);
-        
+
         // Play Jack to lock turn
         gameState.PlayCard("player1", diamondJack);
 
@@ -129,7 +129,7 @@ public class SuitChangerTests
     {
         // Arrange
         var gameState = CreateTestGameState();
-        
+
         // Manually lock turn without playing Jack
         gameState.LockTurn();
 
@@ -150,7 +150,7 @@ public class SuitChangerTests
         // Arrange
         var gameState = CreateTestGameState();
         var diamondJack = Models.Card.NewCard(Suit.Diamonds, Rank.Jack);
-        
+
         // Play Jack to lock turn
         gameState.PlayCard("player1", diamondJack);
 
@@ -169,7 +169,7 @@ public class SuitChangerTests
         var gameState = CreateTestGameState();
         var diamondJack = Models.Card.NewCard(Suit.Diamonds, Rank.Jack);
         var heartKing = Models.Card.NewCard(Suit.Hearts, Rank.King);
-        
+
         // Play Jack to lock turn
         gameState.PlayCard("player1", diamondJack);
 

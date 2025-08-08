@@ -201,7 +201,7 @@ public class HandManagementTests
         clonedPlayer.Id.Should().Be(originalPlayer.Id);
         clonedPlayer.Hand.Should().Equal(originalPlayer.Hand);
         clonedPlayer.HandSize().Should().Be(originalPlayer.HandSize());
-        
+
         // Verify they are separate instances
         clonedPlayer.Should().NotBeSameAs(originalPlayer);
     }

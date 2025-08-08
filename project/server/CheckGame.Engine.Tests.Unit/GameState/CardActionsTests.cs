@@ -122,7 +122,7 @@ public class CardActionsTests
         // Arrange
         var gameState = CreateTestGameState();
         var spadeAce = Models.Card.NewCard(Suit.Spades, Rank.Ace);
-        
+
         // Change top card to make ace playable
         gameState.PlayCard("player1", spadeAce);
 
@@ -166,7 +166,7 @@ public class CardActionsTests
         // Arrange
         var gameState = CreateTestGameState();
         var player = gameState.Players[0];
-        
+
         // Clear hand and add one matching card
         player.ClearHand();
         var lastCard = Models.Card.NewCard(Suit.Hearts, Rank.Queen);

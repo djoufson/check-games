@@ -129,7 +129,7 @@ public class DeckManipulationTests
         // Assert
         clonedDeck.Count().Should().Be(originalDeck.Count());
         clonedDeck.Cards.Should().Equal(originalDeck.Cards);
-        
+
         // Verify they are separate instances
         clonedDeck.Should().NotBeSameAs(originalDeck);
         clonedDeck.Cards.Should().NotBeSameAs(originalDeck.Cards);
@@ -139,9 +139,9 @@ public class DeckManipulationTests
     public void Clone_ShouldCreateIndependentCopy()
     {
         // Arrange
-        var originalDeck = new Models.Deck(new[] 
-        { 
-            Models.Card.NewCard(Suit.Hearts, Rank.Ace) 
+        var originalDeck = new Models.Deck(new[]
+        {
+            Models.Card.NewCard(Suit.Hearts, Rank.Ace)
         });
 
         // Act

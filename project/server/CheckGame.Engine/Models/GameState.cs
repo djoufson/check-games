@@ -151,8 +151,8 @@ public class GameState
         options ??= new GameOptions();
 
         // Create random number generator
-        var random = options.RandomSeed.HasValue 
-            ? new Random(options.RandomSeed.Value) 
+        var random = options.RandomSeed.HasValue
+            ? new Random(options.RandomSeed.Value)
             : new Random();
 
         // Create and shuffle the deck
@@ -679,8 +679,8 @@ public class GameState
     /// <returns>JSON string representation</returns>
     public string ToJson()
     {
-        return JsonSerializer.Serialize(this, new JsonSerializerOptions 
-        { 
+        return JsonSerializer.Serialize(this, new JsonSerializerOptions
+        {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         });
