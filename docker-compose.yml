@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: checkgame_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: check_game
+      POSTGRES_USER: checkgame_user
+      POSTGRES_PASSWORD: checkgame_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: checkgame_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@checkgame.com
+      PGADMIN_DEFAULT_PASSWORD: adminpass
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+volumes:
+  pgdata:
+  pgadmin_data:
