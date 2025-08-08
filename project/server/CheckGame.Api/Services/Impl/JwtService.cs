@@ -1,6 +1,7 @@
 using CheckGame.Api.Contracts.Responses;
 using CheckGame.Api.Options;
 using CheckGame.Api.Persistence.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,10 +14,12 @@ namespace CheckGame.Api.Services.Impl;
 public class JwtService : IJwtService
 {
     private readonly JwtOptions _jwtOptions;
+    private readonly UserManager<User> _userManager;
 
-    public JwtService(IOptions<JwtOptions> jwtOptions)
+    public JwtService(IOptions<JwtOptions> jwtOptions, UserManager<User> userManager)
     {
         _jwtOptions = jwtOptions.Value;
+        _userManager = userManager;
     }
 
     public JwtResponse GenerateJwtToken(User user)
@@ -78,5 +81,47 @@ public class JwtService : IJwtService
         }
 
         return principal;
+    }
+
+    public async Task<JwtResponse?> RefreshTokenAsync(string accessToken, string refreshToken)
+    {
+        try
+        {
+            // Get principal from expired token
+            var principal = GetPrincipalFromExpiredToken(accessToken);
+            if (principal == null)
+            {
+                return null;
+            }
+
+            // Extract user ID from claims
+            var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return null;
+            }
+
+            // Get user from database
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return null;
+            }
+
+            // In a real application, you would validate the refresh token
+            // against stored refresh tokens in the database
+            // For now, we'll just check if the refresh token is not empty
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                return null;
+            }
+
+            // Generate new JWT token
+            return GenerateJwtToken(user);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

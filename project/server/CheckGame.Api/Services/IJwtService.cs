@@ -9,4 +9,5 @@ public interface IJwtService
     JwtResponse GenerateJwtToken(User user);
     string GenerateRefreshToken();
     ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
+    Task<JwtResponse?> RefreshTokenAsync(string accessToken, string refreshToken);
 }
