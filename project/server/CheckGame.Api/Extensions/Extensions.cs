@@ -1,3 +1,4 @@
+using CheckGame.Api.Middleware;
 using CheckGame.Api.Options;
 using CheckGame.Api.Persistence;
 using CheckGame.Api.Persistence.Models;
@@ -49,6 +50,10 @@ public static class Extensions
 
         // Register custom services
         services.AddScoped<IJwtService, JwtService>();
+        
+        // Register exception handling
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
 
         return services;
     }
