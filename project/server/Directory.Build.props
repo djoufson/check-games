@@ -40,6 +40,9 @@
     <SwashbuckleAspNetCoreVersion>6.8.0</SwashbuckleAspNetCoreVersion>
     <SerilogVersion>4.0.2</SerilogVersion>
     <StackExchangeRedisVersion>2.8.16</StackExchangeRedisVersion>
+    <MicrosoftAspNetCoreAuthenticationJwtBearerVersion>9.0.0</MicrosoftAspNetCoreAuthenticationJwtBearerVersion>
+    <SystemIdentityModelTokensJwtVersion>8.0.1</SystemIdentityModelTokensJwtVersion>
+    <FluentValidationDependencyInjectionExtensionsVersion>12.0.0</FluentValidationDependencyInjectionExtensionsVersion>
   </PropertyGroup>
 
   <!-- Common Test Dependencies -->

@@ -5,6 +5,7 @@ public static class Endpoints
     {
         var group = route.MapGroup("/auth");
         group.MapPost("register", Auth.Register);
+        group.MapPost("login", Auth.Login);
         return route;
     }
 }

@@ -1,6 +1,8 @@
 using CheckGame.Api.Contracts.Requests;
+using CheckGame.Api.Contracts.Responses;
 using CheckGame.Api.Persistence;
 using CheckGame.Api.Persistence.Models;
+using CheckGame.Api.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CheckGame.Api.Endpoints.Auth;
 
-public class Auth
+public partial class Auth
 {
     public static async Task<IResult> Register(
         [FromBody] RegisterRequest request,
