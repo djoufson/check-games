@@ -389,16 +389,16 @@ public class GameState
             return "Card not in hand";
         }
 
-        // Check if the play is valid
-        if (!Player.CanPlayCardOn(card, TopCard, InAttackChain))
-        {
-            return "Invalid play";
-        }
-
         // If in an attack chain, only wild cards can be played on wild cards
         if (InAttackChain && !card.IsWildCard())
         {
             return "Must play a wild card to defend against an attack";
+        }
+
+        // Check if the play is valid
+        if (!Player.CanPlayCardOn(card, TopCard, InAttackChain))
+        {
+            return "Invalid play";
         }
 
         // Remove the card from the player's hand
