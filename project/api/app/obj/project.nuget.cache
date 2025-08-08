@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "XtAXoIIuTE4=",
+  "success": true,
+  "projectFilePath": "/Volumes/Personal/Projects/game/project/api/app/app.csproj",
+  "expectedPackageFiles": [
+    "/Users/djoufson/.nuget/packages/microsoft.aspnetcore.openapi/9.0.0/microsoft.aspnetcore.openapi.9.0.0.nupkg.sha512",
+    "/Users/djoufson/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
