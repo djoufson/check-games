@@ -6,14 +6,9 @@ using System.Security.Claims;
 namespace CheckGame.Api.Hubs;
 
 [Authorize]
-public class GameHub : Hub<IGameClient>, IGameServer
+public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
 {
-    private readonly ILogger<GameHub> _logger;
-
-    public GameHub(ILogger<GameHub> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<GameHub> _logger = logger;
 
     public override async Task OnConnectedAsync()
     {

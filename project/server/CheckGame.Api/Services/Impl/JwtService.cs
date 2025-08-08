@@ -11,16 +11,10 @@ using System.Text;
 
 namespace CheckGame.Api.Services.Impl;
 
-public class JwtService : IJwtService
+public class JwtService(IOptions<JwtOptions> jwtOptions, UserManager<User> userManager) : IJwtService
 {
-    private readonly JwtOptions _jwtOptions;
-    private readonly UserManager<User> _userManager;
-
-    public JwtService(IOptions<JwtOptions> jwtOptions, UserManager<User> userManager)
-    {
-        _jwtOptions = jwtOptions.Value;
-        _userManager = userManager;
-    }
+    private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+    private readonly UserManager<User> _userManager = userManager;
 
     public JwtResponse GenerateJwtToken(User user)
     {

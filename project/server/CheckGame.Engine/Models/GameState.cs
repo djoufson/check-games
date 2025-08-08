@@ -42,11 +42,25 @@ public record GameOptions
 /// <summary>
 /// Represents the current state of a game
 /// </summary>
-public class GameState
+/// <remarks>
+/// Initializes a new instance of the GameState class
+/// </remarks>
+public class GameState(
+    List<Player> players,
+    List<string> activePlayerIds,
+    string currentPlayerId,
+    Direction direction,
+    Deck drawPile,
+    List<Card> discardPile,
+    Card topCard,
+    bool inAttackChain = false,
+    int attackAmount = 0,
+    Suit? lastActiveSuit = null,
+    bool lockedTurn = false)
 {
-    private readonly List<Player> _players;
-    private readonly List<string> _activePlayers;
-    private readonly List<Card> _discardPile;
+    private readonly List<Player> _players = players ?? throw new ArgumentNullException(nameof(players));
+    private readonly List<string> _activePlayers = activePlayerIds ?? throw new ArgumentNullException(nameof(activePlayerIds));
+    private readonly List<Card> _discardPile = discardPile ?? throw new ArgumentNullException(nameof(discardPile));
 
     /// <summary>
     /// Gets the players in the game
@@ -61,18 +75,18 @@ public class GameState
     /// <summary>
     /// Gets the ID of the current player
     /// </summary>
-    public string CurrentPlayerId { get; private set; }
+    public string CurrentPlayerId { get; private set; } = currentPlayerId ?? throw new ArgumentNullException(nameof(currentPlayerId));
 
     /// <summary>
     /// Gets the direction of play
     /// </summary>
 
-    public Direction Direction { get; private set; }
+    public Direction Direction { get; private set; } = direction;
 
     /// <summary>
     /// Gets the draw pile
     /// </summary>
-    public Deck DrawPile { get; private set; }
+    public Deck DrawPile { get; private set; } = drawPile ?? throw new ArgumentNullException(nameof(drawPile));
 
     /// <summary>
     /// Gets the discard pile
@@ -82,56 +96,27 @@ public class GameState
     /// <summary>
     /// Gets the top card of the discard pile
     /// </summary>
-    public Card TopCard { get; private set; }
+    public Card TopCard { get; private set; } = topCard ?? throw new ArgumentNullException(nameof(topCard));
 
     /// <summary>
     /// Gets whether the game is in an attack chain
     /// </summary>
-    public bool InAttackChain { get; private set; }
+    public bool InAttackChain { get; private set; } = inAttackChain;
 
     /// <summary>
     /// Gets the accumulated attack amount
     /// </summary>
-    public int AttackAmount { get; private set; }
+    public int AttackAmount { get; private set; } = attackAmount;
 
     /// <summary>
     /// Gets the last active suit (for Jack's suit change effect)
     /// </summary>
-    public Suit LastActiveSuit { get; private set; }
+    public Suit LastActiveSuit { get; private set; } = lastActiveSuit ?? topCard.Suit;
 
     /// <summary>
     /// Gets whether the turn is locked until the suit is changed
     /// </summary>
-    public bool LockedTurn { get; private set; }
-
-    /// <summary>
-    /// Initializes a new instance of the GameState class
-    /// </summary>
-    public GameState(
-        List<Player> players,
-        List<string> activePlayerIds,
-        string currentPlayerId,
-        Direction direction,
-        Deck drawPile,
-        List<Card> discardPile,
-        Card topCard,
-        bool inAttackChain = false,
-        int attackAmount = 0,
-        Suit? lastActiveSuit = null,
-        bool lockedTurn = false)
-    {
-        _players = players ?? throw new ArgumentNullException(nameof(players));
-        _activePlayers = activePlayerIds ?? throw new ArgumentNullException(nameof(activePlayerIds));
-        CurrentPlayerId = currentPlayerId ?? throw new ArgumentNullException(nameof(currentPlayerId));
-        Direction = direction;
-        DrawPile = drawPile ?? throw new ArgumentNullException(nameof(drawPile));
-        _discardPile = discardPile ?? throw new ArgumentNullException(nameof(discardPile));
-        TopCard = topCard ?? throw new ArgumentNullException(nameof(topCard));
-        InAttackChain = inAttackChain;
-        AttackAmount = attackAmount;
-        LastActiveSuit = lastActiveSuit ?? topCard.Suit;
-        LockedTurn = lockedTurn;
-    }
+    public bool LockedTurn { get; private set; } = lockedTurn;
 
     /// <summary>
     /// Creates a new game state with the given player IDs and options

@@ -5,29 +5,23 @@ namespace CheckGame.Engine.Models;
 /// <summary>
 /// Represents a player in the game
 /// </summary>
-public class Player
+/// <remarks>
+/// Initializes a new instance of the Player class
+/// </remarks>
+/// <param name="id">The player's unique identifier</param>
+public class Player(string id)
 {
-    private readonly List<Card> _hand;
+    private readonly List<Card> _hand = [];
 
     /// <summary>
     /// Gets the player's ID
     /// </summary>
-    public string Id { get; }
+    public string Id { get; } = id ?? throw new ArgumentNullException(nameof(id));
 
     /// <summary>
     /// Gets the player's hand (read-only)
     /// </summary
     public IReadOnlyList<Card> Hand => _hand.AsReadOnly();
-
-    /// <summary>
-    /// Initializes a new instance of the Player class
-    /// </summary>
-    /// <param name="id">The player's unique identifier</param>
-    public Player(string id)
-    {
-        Id = id ?? throw new ArgumentNullException(nameof(id));
-        _hand = [];
-    }
 
     /// <summary>
     /// Creates a new player with the given ID and an empty hand

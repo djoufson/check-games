@@ -5,23 +5,18 @@ namespace CheckGame.Engine.Models;
 /// <summary>
 /// Represents a deck of cards
 /// </summary>
-public class Deck
+/// <remarks>
+/// Initializes a new instance of the Deck class
+/// </remarks>
+/// <param name="cards">Optional list of cards to initialize the deck with</param>
+public class Deck(IEnumerable<Card>? cards = null)
 {
-    private readonly List<Card> _cards;
+    private readonly List<Card> _cards = cards?.ToList() ?? [];
 
     /// <summary>
     /// Gets the cards in the deck
     /// </summary>
     public IReadOnlyList<Card> Cards => _cards.AsReadOnly();
-
-    /// <summary>
-    /// Initializes a new instance of the Deck class
-    /// </summary>
-    /// <param name="cards">Optional list of cards to initialize the deck with</param>
-    public Deck(IEnumerable<Card>? cards = null)
-    {
-        _cards = cards?.ToList() ?? [];
-    }
 
     /// <summary>
     /// Creates a new standard deck of cards (52 cards + 2 jokers)
