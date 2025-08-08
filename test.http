@@ -1,4 +1,10 @@
 POST http://localhost:5277/api/auth/register
+Content-Type: application/json
 
 {
+    "email": "email@gmail.com",
+    "username": "username",
+    "firstname": "firstname",
+    "lastname": "lastname",
+    "password": "P@i38Jnkjnwej83204-"
 }
