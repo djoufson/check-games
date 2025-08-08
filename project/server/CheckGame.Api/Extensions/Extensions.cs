@@ -19,9 +19,12 @@ public static class Extensions
     {
         services.AddOpenApi();
 
-        // Configure JWT options
+        // Configure options
+        services.Configure<SignalROptions>(configuration.GetSection(SignalROptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+        var signalROptions = configuration.GetSection(SignalROptions.SectionName).Get<SignalROptions>() ?? new SignalROptions();
 
         // JWT Authentication Configuration
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -54,6 +57,16 @@ public static class Extensions
         // Register exception handling
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
+
+        // Register SignalR
+        services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = signalROptions.EnableDetailedErrors;
+            options.KeepAliveInterval = signalROptions.KeepAliveInterval;
+            options.ClientTimeoutInterval = signalROptions.ClientTimeoutInterval;
+            options.HandshakeTimeout = signalROptions.HandshakeTimeout;
+            options.MaximumReceiveMessageSize = signalROptions.MaximumReceiveMessageSize;
+        });
 
         return services;
     }

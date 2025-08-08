@@ -1,5 +1,6 @@
 using CheckGame.Api.Endpoints.Auth;
 using CheckGame.Api.Extensions;
+using CheckGame.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +17,13 @@ app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app
     .MapGroup("api")
     .MapAuthEndpoints();
+
+// Map SignalR Hub
+app.MapHub<GameHub>("/gamehub");
 
 app.Run();
