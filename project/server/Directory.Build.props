@@ -28,6 +28,7 @@
   <!-- Common Package Versions -->
   <PropertyGroup>
     <MicrosoftAspNetCoreOpenApiVersion>9.0.0</MicrosoftAspNetCoreOpenApiVersion>
+    <MicrosoftEntityFrameworkCoreVersion>9.0.8</MicrosoftEntityFrameworkCoreVersion>
     <MicrosoftNETTestSdkVersion>17.8.0</MicrosoftNETTestSdkVersion>
     <XunitVersion>2.6.1</XunitVersion>
     <XunitRunnerVisualStudioVersion>2.5.3</XunitRunnerVisualStudioVersion>

@@ -1,3 +1,5 @@
+using CheckGame.Api.Endpoints.Auth;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -10,5 +12,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapGroup("api")
+.MapAuthEndpoints();
 
 app.Run();
