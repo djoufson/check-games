@@ -141,7 +141,7 @@ class _JoinSessionDialogState extends State<JoinSessionDialog> {
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
                   ),
                 )
-              : const Text('Create Session'),
+              : const Text('Join Session'),
         ),
       ],
     );

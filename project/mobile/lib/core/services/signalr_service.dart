@@ -331,10 +331,12 @@ class SignalRService {
       if (playerName != null) {
         args.add(playerName);
       }
+      debugPrint('SignalR: Invoking JoinGameSession with sessionId: $sessionId, playerName: $playerName');
       await _connection!.invoke('JoinGameSession', args: args);
-      debugPrint('SignalR: Joined game session: $sessionId');
+      debugPrint('SignalR: Successfully invoked JoinGameSession for session: $sessionId');
     } catch (e) {
       debugPrint('SignalR: Error joining game session: $e');
+      rethrow; // Re-throw to let the caller know about the error
     }
   }
 

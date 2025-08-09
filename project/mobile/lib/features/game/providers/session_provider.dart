@@ -100,7 +100,8 @@ class SessionProvider with ChangeNotifier {
 
       if (response.success && response.data != null) {
         _currentSession = response.data!.session;
-        await _joinSignalRSession(_currentSession!.id);
+        // Use the assigned player name from the server response
+        await _joinSignalRSession(_currentSession!.id, playerName: response.data!.assignedPlayerName);
         _setupSignalRListeners();
         _setLoading(false);
         return true;
@@ -162,10 +163,18 @@ class SessionProvider with ChangeNotifier {
   }
 
   /// Join SignalR session for real-time updates
-  Future<void> _joinSignalRSession(String sessionId) async {
+  Future<void> _joinSignalRSession(String sessionId, {String? playerName}) async {
+    debugPrint('SessionProvider: Attempting to join SignalR session: $sessionId (SignalR connected: ${_signalRService.isConnected})');
+    
     try {
-      await _signalRService.joinGameSession(sessionId);
-      debugPrint('SessionProvider: Joined SignalR session: $sessionId');
+      // Ensure SignalR is connected before attempting to join
+      if (!_signalRService.isConnected) {
+        debugPrint('SessionProvider: SignalR not connected, cannot join session without connection');
+        return;
+      }
+      
+      await _signalRService.joinGameSession(sessionId, playerName: playerName);
+      debugPrint('SessionProvider: Successfully joined SignalR session: $sessionId${playerName != null ? ' as $playerName' : ''}');
     } catch (e) {
       debugPrint('SessionProvider: Failed to join SignalR session: $e');
     }
@@ -194,9 +203,12 @@ class SessionProvider with ChangeNotifier {
 
   /// Handle type-safe SignalR events
   void _handleSignalREvent(SignalREvent event) {
-    if (_currentSession == null) return;
+    if (_currentSession == null) {
+      debugPrint('SessionProvider: Ignoring SignalR event ${event.runtimeType} - no current session');
+      return;
+    }
 
-    debugPrint('SessionProvider: Received SignalR event: ${event.runtimeType}');
+    debugPrint('SessionProvider: Processing SignalR event: ${event.runtimeType} for session: ${_currentSession!.id}');
 
     switch (event) {
       case PlayerJoinedEvent():
@@ -247,12 +259,15 @@ class SessionProvider with ChangeNotifier {
       // Check if player already exists
       if (!_currentSession!.players.contains(event.userName)) {
         // Add new player to the session
+        final newPlayerCount = _currentSession!.currentPlayerCount + 1;
         _currentSession = _currentSession!.copyWith(
           players: [..._currentSession!.players, event.userName],
-          currentPlayerCount: _currentSession!.currentPlayerCount + 1,
+          currentPlayerCount: newPlayerCount,
         );
         notifyListeners();
-        debugPrint('SessionProvider: Player joined: ${event.userName}');
+        debugPrint('SessionProvider: Player joined: ${event.userName} (Session: ${event.sessionId}, Total players: $newPlayerCount)');
+      } else {
+        debugPrint('SessionProvider: Player ${event.userName} already in session, skipping');
       }
     } catch (e) {
       debugPrint('SessionProvider: Error handling PlayerJoined: $e');
@@ -273,7 +288,7 @@ class SessionProvider with ChangeNotifier {
         currentPlayerCount: updatedPlayers.length,
       );
       notifyListeners();
-      debugPrint('SessionProvider: Player left: ${event.userName}');
+      debugPrint('SessionProvider: Player left: ${event.userName} (Session: ${event.sessionId}, Total players: ${updatedPlayers.length})');
     } catch (e) {
       debugPrint('SessionProvider: Error handling PlayerLeft: $e');
     }
