@@ -135,7 +135,7 @@ public class GameHub(ILogger<GameHub> logger, IGameSessionService gameSessionSer
             }
 
             var playerName = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
-            
+
             _logger.LogInformation("Player {PlayerName} (UserId: {UserId}) played card in session {SessionId}",
                 playerName, userId, sessionId);
 
@@ -173,7 +173,7 @@ public class GameHub(ILogger<GameHub> logger, IGameSessionService gameSessionSer
             }
 
             var playerName = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
-            
+
             _logger.LogInformation("Player {PlayerName} (UserId: {UserId}) drew card in session {SessionId}",
                 playerName, userId, sessionId);
 
@@ -210,7 +210,7 @@ public class GameHub(ILogger<GameHub> logger, IGameSessionService gameSessionSer
             }
 
             var playerName = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
-            
+
             // Broadcast message to all players in the session
             var gameMessageEvent = new GameMessageEvent(userId ?? "anonymous", playerName, sessionId, message);
             await Clients.Group($"GameSession_{sessionId}").GameMessage(gameMessageEvent);

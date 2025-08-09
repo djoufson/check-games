@@ -15,7 +15,7 @@ public partial class GameSessions
         ClaimsPrincipal user)
     {
         await validator.ValidateAndThrowAsync(request);
-        
+
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
         {

@@ -24,7 +24,7 @@ public partial class GameSessions
 
         // Create request object for the service
         var request = new JoinGameSessionRequest(sessionId, playerName);
-        
+
         var response = await gameSessionService.JoinSessionAsync(userId, request);
         if (response == null)
         {

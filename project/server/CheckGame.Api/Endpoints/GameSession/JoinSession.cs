@@ -15,7 +15,7 @@ public partial class GameSessions
         ClaimsPrincipal? user)
     {
         await validator.ValidateAndThrowAsync(request);
-        
+
         // Get user ID if authenticated, otherwise null for anonymous users
         var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
