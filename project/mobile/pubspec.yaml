@@ -37,6 +37,15 @@ dependencies:
   
   # Google Fonts for brand typography (Fredoka & Quicksand)
   google_fonts: ^6.2.1
+  
+  # HTTP client for API communication
+  http: ^1.2.2
+  
+  # Shared preferences for local storage
+  shared_preferences: ^2.3.4
+  
+  # Provider for state management
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:
