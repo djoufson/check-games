@@ -23,6 +23,7 @@ public static class Extensions
         services.Configure<SignalROptions>(configuration.GetSection(SignalROptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<GameSessionOptions>(configuration.GetSection(GameSessionOptions.SectionName));
+        services.Configure<RedisCacheOptions>(configuration.GetSection(RedisCacheOptions.SectionName));
 
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
         var signalROptions = configuration.GetSection(SignalROptions.SectionName).Get<SignalROptions>() ?? new SignalROptions();
@@ -55,6 +56,17 @@ public static class Extensions
         // Register custom services
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IGameSessionService, Services.Impl.GameSessionService>();
+        services.AddScoped<IConnectionCacheService, Services.Impl.ConnectionCacheService>();
+
+        // Add Redis distributed cache
+        var redisCacheOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>() ?? new RedisCacheOptions();
+        var redisConnectionString = redisCacheOptions.ConnectionString ?? configuration.GetConnectionString("Redis") ?? "localhost:6379";
+        
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnectionString;
+            options.InstanceName = redisCacheOptions.InstanceName;
+        });
 
         // Register exception handling
         services.AddExceptionHandler<GlobalExceptionHandler>();

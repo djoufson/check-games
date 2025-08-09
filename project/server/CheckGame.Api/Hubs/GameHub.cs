@@ -7,17 +7,31 @@ using System.Security.Claims;
 
 namespace CheckGame.Api.Hubs;
 
-public class GameHub(ILogger<GameHub> logger, IGameSessionService gameSessionService) : Hub<IGameClient>, IGameServer
+public class GameHub(
+    ILogger<GameHub> logger, 
+    IGameSessionService gameSessionService,
+    IConnectionCacheService connectionCacheService) : Hub<IGameClient>, IGameServer
 {
     private readonly ILogger<GameHub> _logger = logger;
     private readonly IGameSessionService _gameSessionService = gameSessionService;
+    private readonly IConnectionCacheService _connectionCacheService = connectionCacheService;
 
     public override async Task OnConnectedAsync()
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        _logger.LogInformation("User {UserName} ({UserId}) connected to GameHub", userName, userId);
+        // Store connection in Redis cache if user is authenticated
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await _connectionCacheService.AddUserConnectionAsync(userId, Context.ConnectionId);
+            _logger.LogInformation("Authenticated user {UserName} ({UserId}) connected to GameHub with connection {ConnectionId}", 
+                userName, userId, Context.ConnectionId);
+        }
+        else
+        {
+            _logger.LogInformation("Anonymous user connected to GameHub with connection {ConnectionId}", Context.ConnectionId);
+        }
 
         await base.OnConnectedAsync();
     }
@@ -27,11 +41,17 @@ public class GameHub(ILogger<GameHub> logger, IGameSessionService gameSessionSer
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        _logger.LogInformation("User {UserName} ({UserId}) disconnected from GameHub", userName, userId);
-
-        // Note: In a production implementation, you would track which sessions 
-        // the user is in and automatically leave them here.
-        // For now, clients should explicitly call LeaveGameSession before disconnecting.
+        // Remove connection from Redis cache if user is authenticated
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await _connectionCacheService.RemoveConnectionAsync(userId, Context.ConnectionId);
+            _logger.LogInformation("Authenticated user {UserName} ({UserId}) disconnected from GameHub, connection {ConnectionId} removed", 
+                userName, userId, Context.ConnectionId);
+        }
+        else
+        {
+            _logger.LogInformation("Anonymous user disconnected from GameHub, connection {ConnectionId}", Context.ConnectionId);
+        }
 
         await base.OnDisconnectedAsync(exception);
     }
