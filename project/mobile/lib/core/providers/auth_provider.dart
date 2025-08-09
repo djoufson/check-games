@@ -126,22 +126,25 @@ class AuthProvider with ChangeNotifier {
     if (response.success && response.data != null) {
       _tokens = response.data!;
 
-      // Extract user info from JWT token (simplified - in production you might want a separate endpoint)
-      // For now, we'll create a basic user profile from the email
-      _user = UserProfile(
-        id: 'temp-id', // This should come from a separate user info endpoint
-        userName: request.email.split('@')[0],
-        firstName: 'User',
-        lastName: 'Name',
-        email: request.email,
-      );
-
-      await _storeAuth(_tokens!, _user!);
-      _status = AuthStatus.authenticated;
-      _scheduleTokenRefresh();
-      await _initializeSignalR();
-      notifyListeners();
-      return true;
+      // Fetch user profile from the API
+      final userResponse = await _authService.getCurrentUser(_tokens!.accessToken);
+      
+      if (userResponse.success && userResponse.data != null) {
+        _user = userResponse.data!;
+        
+        await _storeAuth(_tokens!, _user!);
+        _status = AuthStatus.authenticated;
+        _scheduleTokenRefresh();
+        await _initializeSignalR();
+        notifyListeners();
+        return true;
+      } else {
+        // Failed to fetch user profile, logout and show error
+        _status = AuthStatus.unauthenticated;
+        _error = userResponse.error ?? 'Failed to fetch user profile';
+        notifyListeners();
+        return false;
+      }
     } else {
       _status = AuthStatus.unauthenticated;
       _error =
@@ -168,6 +171,13 @@ class AuthProvider with ChangeNotifier {
       _status = AuthStatus.authenticated;
       _scheduleTokenRefresh();
       await _updateSignalRToken();
+      
+      // Optionally refresh user profile data to keep it up to date
+      // This runs in the background and doesn't affect the token refresh result
+      refreshUserProfile().catchError((error) {
+        debugPrint('Auth Provider: Failed to refresh user profile during token refresh: $error');
+        return false; // Return a value for the catchError handler
+      });
     } else {
       await logout();
     }
@@ -221,6 +231,31 @@ class AuthProvider with ChangeNotifier {
 
     await _clearStoredAuth();
     notifyListeners();
+  }
+
+  /// Refresh current user profile data
+  Future<bool> refreshUserProfile() async {
+    if (_tokens?.accessToken == null || !isAuthenticated) {
+      return false;
+    }
+
+    final response = await _authService.getCurrentUser(_tokens!.accessToken);
+    
+    if (response.success && response.data != null) {
+      _user = response.data!;
+      
+      // Update stored data
+      if (_tokens != null) {
+        await _storeAuth(_tokens!, _user!);
+      }
+      
+      notifyListeners();
+      return true;
+    } else {
+      _error = response.error ?? 'Failed to fetch user profile';
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Clear any error messages

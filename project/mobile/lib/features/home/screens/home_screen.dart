@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/api/models/auth_models.dart';
 import '../../../core/widgets/connection_status_widget.dart';
 import '../../game/providers/session_provider.dart';
 import '../../game/widgets/create_session_dialog.dart';
@@ -40,6 +41,8 @@ class HomeScreen extends StatelessWidget {
                     if (context.mounted) {
                       Navigator.of(context).pushReplacementNamed('/login');
                     }
+                  } else if (value == 'profile') {
+                    _showProfileDialog(context, authProvider);
                   }
                 },
                 itemBuilder: (BuildContext context) => [
@@ -580,5 +583,117 @@ class HomeScreen extends StatelessWidget {
         );
       }
     }
+  }
+
+  /// Show user profile dialog
+  void _showProfileDialog(BuildContext context, AuthProvider authProvider) {
+    final user = authProvider.user;
+    if (user == null) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                radius: 20,
+                child: Text(
+                  user.initials,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Profile',
+                style: AppTypography.headlineSmall.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildProfileField('Display Name', user.displayName),
+              const SizedBox(height: 12),
+              _buildProfileField('Username', user.userName),
+              const SizedBox(height: 12),
+              _buildProfileField('Email', user.email),
+              const SizedBox(height: 12),
+              _buildProfileField('First Name', user.firstName),
+              const SizedBox(height: 12),
+              _buildProfileField('Last Name', user.lastName),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Icon(
+                    Icons.refresh,
+                    size: 16,
+                    color: AppColors.mediumGrey,
+                  ),
+                  const SizedBox(width: 4),
+                  TextButton(
+                    onPressed: () async {
+                      await authProvider.refreshUserProfile();
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                        _showProfileDialog(context, authProvider);
+                      }
+                    },
+                    child: Text(
+                      'Refresh Data',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Build a profile field row
+  Widget _buildProfileField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.mediumGrey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value.isNotEmpty ? value : 'Not provided',
+          style: AppTypography.bodyMedium.copyWith(
+            color: value.isNotEmpty ? AppColors.darkGrey : AppColors.mediumGrey,
+            fontStyle: value.isNotEmpty ? FontStyle.normal : FontStyle.italic,
+          ),
+        ),
+      ],
+    );
   }
 }

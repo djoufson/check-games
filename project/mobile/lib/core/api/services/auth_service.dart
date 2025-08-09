@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/auth_models.dart';
+import '../../../config/api_config.dart';
 
 class AuthService {
-  // TODO: Update with actual API base URL - using localhost for development
-  static const String _baseUrl = 'http://localhost:5277/api/auth';
+  static const String _baseUrl = '${ApiConfig.baseUrl}/auth';
 
   final http.Client _client;
 
@@ -109,6 +109,33 @@ class AuthService {
         return ApiResponse.error('Invalid or expired refresh token');
       } else {
         return ApiResponse.error('Token refresh failed. Please login again.');
+      }
+    } catch (e) {
+      return ApiResponse.error('Network error. Please check your connection.');
+    }
+  }
+
+  /// Fetch current user data using access token
+  Future<ApiResponse<UserProfile>> getCurrentUser(String accessToken) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$_baseUrl/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final userProfile = UserProfile.fromJson(data);
+        return ApiResponse.success(userProfile);
+      } else if (response.statusCode == 401) {
+        return ApiResponse.error('Authentication required');
+      } else if (response.statusCode == 404) {
+        return ApiResponse.error('User not found');
+      } else {
+        return ApiResponse.error('Failed to fetch user data');
       }
     } catch (e) {
       return ApiResponse.error('Network error. Please check your connection.');

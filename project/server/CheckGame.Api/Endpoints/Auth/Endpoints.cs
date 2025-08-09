@@ -7,6 +7,7 @@ public static class Endpoints
         group.MapPost("register", Auth.Register);
         group.MapPost("login", Auth.Login);
         group.MapPost("refresh-token", Auth.RefreshToken);
+        group.MapGet("me", Auth.Me).RequireAuthorization();
         return route;
     }
 }
