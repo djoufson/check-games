@@ -1,8 +1,10 @@
 using CheckGame.Api.Contracts.Requests;
 using CheckGame.Api.Contracts.Responses;
+using CheckGame.Api.Options;
 using CheckGame.Api.Persistence;
 using CheckGame.Api.Persistence.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace CheckGame.Api.Services.Impl;
 
@@ -10,16 +12,25 @@ public class GameSessionService : IGameSessionService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<GameSessionService> _logger;
+    private readonly GameSessionOptions _gameSessionOptions;
 
-    public GameSessionService(AppDbContext context, ILogger<GameSessionService> logger)
+    public GameSessionService(
+        AppDbContext context,
+        ILogger<GameSessionService> logger,
+        IOptions<GameSessionOptions> gameSessionOptions)
     {
         _context = context;
         _logger = logger;
+        _gameSessionOptions = gameSessionOptions.Value;
     }
 
     public async Task<GameSessionResponse> CreateSessionAsync(string createdByUserId, CreateGameSessionRequest request)
     {
-        var session = GameSession.Create(createdByUserId, request.Name, request.MaxPlayers);
+        // Use configured defaults if not specified, enforce limits
+        var maxPlayers = Math.Max(
+            _gameSessionOptions.MinPlayersLimit, _gameSessionOptions.MaxPlayersLimit);
+
+        var session = GameSession.Create(createdByUserId, request.Name, maxPlayers);
 
         _context.GameSessions.Add(session);
         await _context.SaveChangesAsync();
@@ -40,7 +51,7 @@ public class GameSessionService : IGameSessionService
             return null;
         }
 
-        // Generate player name
+        // Generate player name using configured formats
         string playerName;
         if (!string.IsNullOrEmpty(request.PlayerName))
         {
@@ -81,7 +92,7 @@ public class GameSessionService : IGameSessionService
     public async Task<bool> LeaveSessionAsync(string sessionId, string playerName)
     {
         var session = await _context.GameSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
-        
+
         if (session == null)
         {
             return false;
@@ -178,7 +189,7 @@ public class GameSessionService : IGameSessionService
     public async Task<bool> StartGameAsync(string sessionId, string userId)
     {
         var session = await _context.GameSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
-        
+
         if (session == null || !session.IsCreator(userId) || session.Players.Count < 2)
         {
             return false;
@@ -195,7 +206,7 @@ public class GameSessionService : IGameSessionService
     public async Task<bool> EndGameAsync(string sessionId, string userId)
     {
         var session = await _context.GameSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
-        
+
         if (session == null || !session.IsCreator(userId))
         {
             return false;
@@ -218,7 +229,7 @@ public class GameSessionService : IGameSessionService
                 .Reference(s => s.CreatedByUser)
                 .LoadAsync();
         }
-        
+
         return new GameSessionResponse(
             session.Id,
             session.Name,

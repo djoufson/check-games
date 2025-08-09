@@ -22,6 +22,7 @@ public static class Extensions
         // Configure options
         services.Configure<SignalROptions>(configuration.GetSection(SignalROptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<GameSessionOptions>(configuration.GetSection(GameSessionOptions.SectionName));
 
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
         var signalROptions = configuration.GetSection(SignalROptions.SectionName).Get<SignalROptions>() ?? new SignalROptions();

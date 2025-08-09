@@ -4,8 +4,7 @@ namespace CheckGame.Api.Contracts.Requests;
 
 public readonly record struct CreateGameSessionRequest(
     string Name,
-    string? Description,
-    int MaxPlayers);
+    string? Description);
 
 public readonly record struct JoinGameSessionRequest(
     string SessionId,
@@ -26,9 +25,6 @@ public class CreateGameSessionRequestValidator : AbstractValidator<CreateGameSes
 
         RuleFor(x => x.Description)
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
-
-        RuleFor(x => x.MaxPlayers)
-            .InclusiveBetween(2, 6).WithMessage("Maximum players must be between 2 and 6");
     }
 }
 

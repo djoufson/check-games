@@ -34,8 +34,13 @@ public class GameSession
     public static GameSession Create(
         string createdByUserId,
         string name,
-        int maxPlayers = 6)
+        int maxPlayers)
     {
+        if (maxPlayers <= 1)
+        {
+            throw new ArgumentException("The max number of players must be greater than 1", nameof(maxPlayers));
+        }
+
         var session = new GameSession
         {
             Id = Guid.NewGuid().ToString(),
@@ -43,12 +48,12 @@ public class GameSession
             Name = name,
             Status = GameSessionStatus.WaitingForPlayers,
             CreatedAt = DateTime.UtcNow,
-            MaxPlayers = Math.Max(2, Math.Min(6, maxPlayers)) // Enforce 2-6 players
+            MaxPlayers = maxPlayers
         };
 
         // Add the creator as the first player
         var creatorPlayerName = $"Player_{createdByUserId}";
-        session.Players = [creatorPlayerName ];
+        session.Players = [creatorPlayerName];
 
         return session;
     }
