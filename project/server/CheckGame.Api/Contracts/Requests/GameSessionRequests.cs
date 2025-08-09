@@ -4,7 +4,8 @@ namespace CheckGame.Api.Contracts.Requests;
 
 public readonly record struct CreateGameSessionRequest(
     string Name,
-    string? Description);
+    string? Description,
+    int MaxPlayersLimit);
 
 public readonly record struct JoinGameSessionRequest(
     string SessionId,

@@ -23,6 +23,6 @@ public partial class GameSessions
         }
 
         var response = await gameSessionService.CreateSessionAsync(userId, request);
-        return Results.Created($"/api/game-sessions/{response.Id}", response);
+        return Results.Created($"/api/sessions/{response.Session.Id}", response);
     }
 }

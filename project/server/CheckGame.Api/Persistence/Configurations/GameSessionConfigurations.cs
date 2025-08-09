@@ -21,6 +21,10 @@ public class GameSessionConfigurations : IEntityTypeConfiguration<GameSession>
             .HasMaxLength(36)
             .IsRequired();
 
+        builder.Property(e => e.Code)
+            .HasMaxLength(6)
+            .IsRequired();
+
         builder.Property(e => e.CreatedByUserId)
             .IsRequired();
 
@@ -62,6 +66,9 @@ public class GameSessionConfigurations : IEntityTypeConfiguration<GameSession>
 
         // Indexes for performance
         builder.HasIndex(e => e.Status);
+
+        builder.HasIndex(e => e.Code)
+            .IsUnique();
 
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("IX_GameSessions_CreatedAt");

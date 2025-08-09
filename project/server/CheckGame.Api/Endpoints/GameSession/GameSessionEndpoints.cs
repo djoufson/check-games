@@ -4,7 +4,7 @@ public static class GameSessionEndpoints
 {
     public static IEndpointRouteBuilder MapGameSessionEndpoints(this IEndpointRouteBuilder route)
     {
-        var group = route.MapGroup("/game-sessions");
+        var group = route.MapGroup("/sessions");
 
         // Session management endpoints
         group.MapPost("/", GameSessions.CreateSession)

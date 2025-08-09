@@ -6,6 +6,7 @@ import 'core/providers/signalr_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
 import 'features/home/screens/home_screen.dart';
+import 'features/game/providers/session_provider.dart';
 
 void main() {
   runApp(const CheckGameApp());
@@ -20,6 +21,7 @@ class CheckGameApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => SignalRProvider()),
+        ChangeNotifierProvider(create: (context) => SessionProvider()),
       ],
       child: MaterialApp(
         title: 'Check Games',

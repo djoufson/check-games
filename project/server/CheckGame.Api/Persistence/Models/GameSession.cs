@@ -6,6 +6,8 @@ public class GameSession
 {
     public string Id { get; private set; } = string.Empty;
 
+    public string Code { get; private set; } = string.Empty;
+
     public string CreatedByUserId { get; private set; } = string.Empty;
 
     public User CreatedByUser { get; private set; }
@@ -44,6 +46,7 @@ public class GameSession
         var session = new GameSession
         {
             Id = Guid.NewGuid().ToString(),
+            Code = GenerateUniqueSessionCode(),
             CreatedByUserId = createdByUserId,
             Name = name,
             Status = GameSessionStatus.WaitingForPlayers,
@@ -103,6 +106,19 @@ public class GameSession
     public bool IsFull() => Players.Count >= MaxPlayers;
 
     public bool CanJoin() => Status == GameSessionStatus.WaitingForPlayers && !IsFull();
+
+    /// <summary>
+    /// Generates a 6-character alphanumeric session code for easy sharing
+    /// Note: Uniqueness is enforced by database constraint and should be handled at service level
+    /// </summary>
+    private static string GenerateUniqueSessionCode()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new Random();
+        return new string([.. Enumerable
+            .Repeat(chars, 6)
+            .Select(s => s[random.Next(s.Length)])]);
+    }
 }
 
 public enum GameSessionStatus

@@ -6,7 +6,7 @@ namespace CheckGame.Api.Services;
 
 public interface IGameSessionService
 {
-    Task<GameSessionResponse> CreateSessionAsync(string createdByUserId, CreateGameSessionRequest request);
+    Task<CreateSessionResponse> CreateSessionAsync(string createdByUserId, CreateGameSessionRequest request);
     Task<JoinSessionResponse?> JoinSessionAsync(string? userId, JoinGameSessionRequest request);
     Task<bool> LeaveSessionAsync(string sessionId, string playerName);
     Task<GameSessionResponse?> GetSessionAsync(string sessionId);

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:signalr_netcore/signalr_client.dart';
+import '../../config/api_config.dart';
 
 enum SignalRConnectionStatus {
   disconnected,
@@ -49,8 +50,7 @@ class SignalRService {
   /// Create and configure the SignalR connection
   Future<void> _createConnection() async {
     try {
-      // TODO: Update with actual SignalR hub URL
-      const String hubUrl = 'http://localhost:5277/gamehub';
+      const String hubUrl = ApiConfig.signalRHubUrl;
 
       final connectionBuilder = HubConnectionBuilder();
       

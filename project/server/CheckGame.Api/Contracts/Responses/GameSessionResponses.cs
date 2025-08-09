@@ -4,6 +4,7 @@ namespace CheckGame.Api.Contracts.Responses;
 
 public readonly record struct GameSessionResponse(
     string Id,
+    string Code,
     string Name,
     int MaxPlayers,
     int CurrentPlayerCount,
@@ -27,3 +28,7 @@ public readonly record struct JoinSessionResponse(
     string SessionId,
     string AssignedPlayerName,
     GameSessionResponse Session);
+
+public readonly record struct CreateSessionResponse(
+    GameSessionResponse Session,
+    string ShareableLink);

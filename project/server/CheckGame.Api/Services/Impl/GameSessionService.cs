@@ -32,23 +32,43 @@ public class GameSessionService : IGameSessionService
         _connectionCacheService = connectionCacheService;
     }
 
-    public async Task<GameSessionResponse> CreateSessionAsync(string createdByUserId, CreateGameSessionRequest request)
+    public async Task<CreateSessionResponse> CreateSessionAsync(string createdByUserId, CreateGameSessionRequest request)
     {
         // Use configured defaults if not specified, enforce limits
-        var maxPlayers = Math.Max(
-            _gameSessionOptions.MinPlayersLimit, _gameSessionOptions.MaxPlayersLimit);
+        var maxPlayers = request.MaxPlayersLimit > 0 ? request.MaxPlayersLimit : Math.Max(_gameSessionOptions.MinPlayersLimit, _gameSessionOptions.MaxPlayersLimit);
 
-        var session = GameSession.Create(createdByUserId, request.Name, maxPlayers);
+        GameSession session;
+        var maxRetries = 3;
 
-        _context.GameSessions.Add(session);
-        await _context.SaveChangesAsync();
+        // Retry in case of code collision (very unlikely but possible)
+        for (var retry = 0; retry < maxRetries; retry++)
+        {
+            try
+            {
+                session = GameSession.Create(createdByUserId, request.Name, maxPlayers);
+                _context.GameSessions.Add(session);
+                await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Created game session {SessionId} by user {UserId}", session.Id, createdByUserId);
+                _logger.LogInformation("Created game session {SessionId} by user {UserId}", session.Id, createdByUserId);
 
-        // Automatically add the session creator to the SignalR group for real-time updates
-        await AddUserToSessionGroupAsync(createdByUserId, session.Id);
+                // Automatically add the session creator to the SignalR group for real-time updates
+                await AddUserToSessionGroupAsync(createdByUserId, session.Id);
 
-        return await MapToResponseAsync(session);
+                var sessionResponse = await MapToResponseAsync(session);
+                var shareableLink = $"checkgames://join/{session.Code}";
+
+                return new CreateSessionResponse(sessionResponse, shareableLink);
+            }
+            catch (Exception ex) when (ex.Message.Contains("IX_GameSessions_Code") && retry < maxRetries - 1)
+            {
+                // Code collision, retry with a new code
+                _logger.LogWarning("Session code collision occurred, retrying... (attempt {Retry})", retry + 1);
+                _context.ChangeTracker.Clear(); // Clear the failed entity from tracking
+            }
+        }
+
+        // If we get here, all retries failed
+        throw new InvalidOperationException("Failed to create session after multiple attempts due to code collisions");
     }
 
     public async Task<JoinSessionResponse?> JoinSessionAsync(string? userId, JoinGameSessionRequest request)
@@ -249,6 +269,7 @@ public class GameSessionService : IGameSessionService
 
         return new GameSessionResponse(
             session.Id,
+            session.Code,
             session.Name,
             session.MaxPlayers,
             session.Players.Count,

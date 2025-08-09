@@ -4,6 +4,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/connection_status_widget.dart';
+import '../../game/providers/session_provider.dart';
+import '../../game/widgets/create_session_dialog.dart';
+import '../../game/screens/game_session_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -190,34 +193,10 @@ class HomeScreen extends StatelessWidget {
                                   icon: Icons.add_circle,
                                   color: AppColors.primary,
                                   enabled: authProvider.canCreateGames,
-                                  onTap: () {
-                                    if (authProvider.canCreateGames) {
-                                      // TODO: Navigate to create game screen
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Create game feature coming soon!',
-                                            style: AppTypography.bodyMedium,
-                                          ),
-                                          backgroundColor: AppColors.secondary,
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Please sign in to create games',
-                                            style: AppTypography.bodyMedium,
-                                          ),
-                                          backgroundColor: AppColors.warmCoral,
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  onTap: () => _handleCreateGame(
+                                    context, 
+                                    authProvider,
+                                  ),
                                 ),
                                 _buildActionCard(
                                   context,
@@ -401,5 +380,119 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Handle create game action
+  void _handleCreateGame(BuildContext context, AuthProvider authProvider) {
+    if (!authProvider.canCreateGames) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please sign in to create games',
+            style: AppTypography.bodyMedium,
+          ),
+          backgroundColor: AppColors.warmCoral,
+        ),
+      );
+      return;
+    }
+
+    showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) => const CreateSessionDialog(),
+    ).then((result) {
+      if (result != null && context.mounted) {
+        _createGameSession(
+          context,
+          authProvider,
+          sessionName: result['sessionName'] as String,
+          maxPlayers: result['maxPlayers'] as int,
+        );
+      }
+    });
+  }
+
+  /// Create a new game session
+  Future<void> _createGameSession(
+    BuildContext context,
+    AuthProvider authProvider, {
+    required String sessionName,
+    required int maxPlayers,
+  }) async {
+    final sessionProvider = context.read<SessionProvider>();
+    
+    // Update session provider with current access token
+    sessionProvider.updateAccessToken(authProvider.accessToken);
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Creating session...',
+                style: AppTypography.bodyMedium,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      final success = await sessionProvider.createSession(
+        sessionName: sessionName,
+        maxPlayers: maxPlayers,
+      );
+
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+
+        if (success && sessionProvider.currentSession != null) {
+          // Navigate to game session screen
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => GameSessionScreen(
+                sessionId: sessionProvider.currentSession!.id,
+              ),
+            ),
+          );
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                sessionProvider.error ?? 'Failed to create session',
+                style: AppTypography.bodyMedium,
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+        
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'An unexpected error occurred',
+              style: AppTypography.bodyMedium,
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
