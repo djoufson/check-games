@@ -146,10 +146,10 @@ class SessionService {
 
   /// Join a session using session code
   Future<ApiResponse<JoinSessionResponse>> joinSession(
+    String sessionCode,
     JoinSessionRequest request,
   ) async {
     try {
-      final sessionCode = request.sessionCode;
       final response = await http.post(
         Uri.parse('$_baseUrl/sessions/$sessionCode/join'),
         headers: _headers,

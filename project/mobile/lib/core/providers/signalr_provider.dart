@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/signalr_service.dart';
+import '../api/models/signalr_events.dart';
 
 class SignalRProvider with ChangeNotifier {
   final SignalRService _signalRService = SignalRService();
 
   SignalRConnectionStatus _connectionStatus =
       SignalRConnectionStatus.disconnected;
-  Map<String, dynamic>? _lastGameEvent;
+  SignalREvent? _lastGameEvent;
   StreamSubscription<SignalRConnectionStatus>? _statusSubscription;
-  StreamSubscription<Map<String, dynamic>>? _eventSubscription;
+  StreamSubscription<SignalREvent>? _eventSubscription;
   String? _currentSessionId;
 
   SignalRProvider() {
@@ -18,7 +19,7 @@ class SignalRProvider with ChangeNotifier {
 
   // Getters
   SignalRConnectionStatus get connectionStatus => _connectionStatus;
-  Map<String, dynamic>? get lastGameEvent => _lastGameEvent;
+  SignalREvent? get lastGameEvent => _lastGameEvent;
   String? get currentSessionId => _currentSessionId;
   bool get isConnected =>
       _connectionStatus == SignalRConnectionStatus.connected;
@@ -72,7 +73,7 @@ class SignalRProvider with ChangeNotifier {
     _eventSubscription = _signalRService.gameEventStream.listen((event) {
       _lastGameEvent = event;
       notifyListeners();
-      debugPrint('SignalR Provider: Game event received: ${event['type']}');
+      debugPrint('SignalR Provider: Game event received: ${event.runtimeType}');
     });
   }
 
@@ -206,20 +207,33 @@ class SignalRProvider with ChangeNotifier {
   }
 
   /// Listen to specific game event types
-  Stream<Map<String, dynamic>> listenToEventType(String eventType) {
-    return _signalRService.gameEventStream.where(
-      (event) => event['type'] == eventType,
-    );
+  Stream<T> listenToEventType<T extends SignalREvent>() {
+    return _signalRService.gameEventStream
+        .where((event) => event is T)
+        .cast<T>();
   }
 
   /// Get events for the current session only
-  Stream<Map<String, dynamic>> get currentSessionEvents {
+  Stream<SignalREvent> get currentSessionEvents {
     return _signalRService.gameEventStream.where((event) {
-      final data = event['data'];
-      if (data is Map<String, dynamic> && data.containsKey('sessionId')) {
-        return data['sessionId'] == _currentSessionId;
+      // Check if event has a sessionId property and matches current session
+      if (_currentSessionId == null) return false;
+      
+      switch (event) {
+        case PlayerJoinedEvent(sessionId: var sessionId):
+        case PlayerLeftEvent(sessionId: var sessionId):
+        case GameStateUpdatedEvent(sessionId: var sessionId):
+        case GameStartedEvent(sessionId: var sessionId):
+        case GameEndedEvent(sessionId: var sessionId):
+        case TurnChangedEvent(sessionId: var sessionId):
+        case CardPlayedEvent(sessionId: var sessionId):
+        case CardDrawnEvent(sessionId: var sessionId):
+        case SuitChangedEvent(sessionId: var sessionId):
+        case GameMessageEvent(sessionId: var sessionId):
+          return sessionId == _currentSessionId;
+        default:
+          return false;
       }
-      return true; // Include events without session info
     });
   }
 

@@ -451,8 +451,8 @@ class HomeScreen extends StatelessWidget {
 
     try {
       final success = await sessionProvider.createSession(
-        sessionName: sessionName,
-        maxPlayers: maxPlayers,
+        description: sessionName,
+        maxPlayersLimit: maxPlayers,
       );
 
       if (context.mounted) {

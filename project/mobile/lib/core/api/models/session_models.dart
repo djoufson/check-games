@@ -1,164 +1,143 @@
-class GameSession {
-  final String id;
-  final String code;
-  final String createdByUserId;
-  final String createdByUserName;
-  final String name;
-  final SessionStatus status;
-  final List<String> players;
-  final DateTime createdAt;
-  final int maxPlayers;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const GameSession({
-    required this.id,
-    required this.code,
-    required this.createdByUserId,
-    required this.createdByUserName,
-    required this.name,
-    required this.status,
-    required this.players,
-    required this.createdAt,
-    this.maxPlayers = 4,
-  });
+part 'session_models.freezed.dart';
+part 'session_models.g.dart';
 
-  factory GameSession.fromJson(Map<String, dynamic> json) {
-    return GameSession(
-      id: json['id'] as String,
-      code: json['code'] as String,
-      createdByUserId: json['createdByUserId'] as String,
-      createdByUserName: json['createdByUserName'] as String,
-      name: json['name'] as String,
-      status: SessionStatus.values.firstWhere(
-        (e) => e.index == (json['status'] as int),
-        orElse: () => SessionStatus.waiting,
-      ),
-      players: parsePlayers(json['players']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      maxPlayers: json['maxPlayers'] as int? ?? 4,
-    );
-  }
+/// GameSessionStatus enum matching the backend exactly
+/// public enum GameSessionStatus { WaitingForPlayers = 0, InProgress = 1, Completed = 2, Cancelled = 3 }
+enum GameSessionStatus {
+  @JsonValue(0)
+  waitingForPlayers,
+  @JsonValue(1)
+  inProgress,
+  @JsonValue(2)
+  completed,
+  @JsonValue(3)
+  cancelled,
+}
 
-  static List<String> parsePlayers(List<dynamic> data) {
-    List<String> result = [];
-    for (var element in data) {
-      result.add(element as String);
-    }
-
-    return result;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'code': code,
-      'createdByUserId': createdByUserId,
-      'createdByUserName': createdByUserName,
-      'name': name,
-      'status': status.name,
-      'players': players,
-      'createdAt': createdAt.toIso8601String(),
-      'maxPlayers': maxPlayers,
-    };
-  }
-
-  GameSession copyWith({
-    String? id,
-    String? code,
-    String? createdByUserId,
+/// GameSession matching the backend C# record exactly
+/// public readonly record struct GameSessionResponse(
+///     string Id,
+///     string Code,
+///     string Name,
+///     int MaxPlayers,
+///     int CurrentPlayerCount,
+///     GameSessionStatus Status,
+///     string[] Players,
+///     string CreatedByUserId,
+///     string? CreatedByUserName,
+///     DateTime CreatedAt,
+///     DateTime? StartedAt,
+///     DateTime? EndedAt,
+///     bool CanJoin,
+///     bool IsFull);
+@freezed
+class GameSession with _$GameSession {
+  const factory GameSession({
+    required String id,
+    required String code,
+    required String name,
+    required int maxPlayers,
+    required int currentPlayerCount,
+    required GameSessionStatus status,
+    required List<String> players,
+    required String createdByUserId,
     String? createdByUserName,
-    String? name,
-    SessionStatus? status,
-    List<String>? players,
-    DateTime? createdAt,
-    int? maxPlayers,
-  }) {
-    return GameSession(
-      id: id ?? this.id,
-      code: code ?? this.code,
-      createdByUserId: createdByUserId ?? this.createdByUserId,
-      createdByUserName: createdByUserName ?? this.createdByUserName,
-      name: name ?? this.name,
-      status: status ?? this.status,
-      players: players ?? this.players,
-      createdAt: createdAt ?? this.createdAt,
-      maxPlayers: maxPlayers ?? this.maxPlayers,
-    );
-  }
+    required DateTime createdAt,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    required bool canJoin,
+    required bool isFull,
+  }) = _GameSession;
 
-  // Helper getters for compatibility
+  factory GameSession.fromJson(Map<String, dynamic> json) => _$GameSessionFromJson(json);
+}
+
+/// Extension for additional computed properties and methods
+extension GameSessionExtension on GameSession {
+  /// Helper getters for compatibility
   String get hostId => createdByUserId;
-  String get hostName => createdByUserName;
-  bool get isHost => players.any((p) => p == createdByUserName);
-  bool get isFull => players.length >= maxPlayers;
-  bool get canStart => players.length >= 2 && status == SessionStatus.waiting;
+  String? get hostName => createdByUserName;
+  bool get canStart => currentPlayerCount >= 2 && status == GameSessionStatus.waitingForPlayers;
   String get shareableLink => 'checkgames://join/$code';
+  
+  /// Check if current user is the host
+  bool isHostUser(String? currentUserId) => currentUserId != null && currentUserId == createdByUserId;
+  
+  /// Check if current user is in the session
+  bool hasPlayer(String playerName) => players.contains(playerName);
 }
 
-enum SessionStatus { waiting, inProgress, completed, cancelled }
+/// CreateGameSessionRequest matching backend C# record exactly
+/// public readonly record struct CreateGameSessionRequest(string? Description, int MaxPlayersLimit);
+@freezed
+class CreateSessionRequest with _$CreateSessionRequest {
+  const factory CreateSessionRequest({
+    String? description,
+    required int maxPlayersLimit,
+  }) = _CreateSessionRequest;
 
-class CreateSessionRequest {
-  final String name;
-  final int maxPlayers;
-
-  const CreateSessionRequest({required this.name, this.maxPlayers = 4});
-
-  Map<String, dynamic> toJson() {
-    return {'name': name, 'maxPlayers': maxPlayers};
-  }
+  factory CreateSessionRequest.fromJson(Map<String, dynamic> json) => _$CreateSessionRequestFromJson(json);
 }
 
-class CreateSessionResponse {
-  final GameSession session;
-  final String shareableLink;
+/// CreateSessionResponse matching backend C# record exactly
+/// public readonly record struct CreateSessionResponse(GameSessionResponse Session, string ShareableLink);
+@freezed
+class CreateSessionResponse with _$CreateSessionResponse {
+  const factory CreateSessionResponse({
+    required GameSession session,
+    required String shareableLink,
+  }) = _CreateSessionResponse;
 
-  const CreateSessionResponse({
-    required this.session,
-    required this.shareableLink,
-  });
-
-  factory CreateSessionResponse.fromJson(Map<String, dynamic> json) {
-    var session = json['session'] as Map<String, dynamic>;
-    var shareableLink = json['shareableLink'] as String;
-    return CreateSessionResponse(
-      session: GameSession.fromJson(session),
-      shareableLink: shareableLink,
-    );
-  }
+  factory CreateSessionResponse.fromJson(Map<String, dynamic> json) => _$CreateSessionResponseFromJson(json);
 }
 
-class JoinSessionRequest {
-  final String sessionCode;
-  final String? playerName;
+/// JoinGameSessionRequest matching backend C# record exactly
+/// public readonly record struct JoinGameSessionRequest(string? PlayerName);
+@freezed
+class JoinSessionRequest with _$JoinSessionRequest {
+  const factory JoinSessionRequest({
+    String? playerName,
+  }) = _JoinSessionRequest;
 
-  const JoinSessionRequest({required this.sessionCode, this.playerName});
-
-  Map<String, dynamic> toJson() {
-    return {
-      'sessionCode': sessionCode,
-      if (playerName != null) 'playerName': playerName,
-    };
-  }
+  factory JoinSessionRequest.fromJson(Map<String, dynamic> json) => _$JoinSessionRequestFromJson(json);
 }
 
-/*
+/// JoinSessionResponse matching backend C# record exactly
+/// public readonly record struct JoinSessionResponse(string SessionId, string AssignedPlayerName, GameSessionResponse Session);
+@freezed
+class JoinSessionResponse with _$JoinSessionResponse {
+  const factory JoinSessionResponse({
+    required String sessionId,
+    required String assignedPlayerName,
+    required GameSession session,
+  }) = _JoinSessionResponse;
 
-public readonly record struct JoinSessionResponse(
-    string SessionId,
-    string AssignedPlayerName,
-    GameSessionResponse Session);
+  factory JoinSessionResponse.fromJson(Map<String, dynamic> json) => _$JoinSessionResponseFromJson(json);
+}
 
-*/
+/// LeaveGameSessionRequest matching backend C# record exactly  
+/// public readonly record struct LeaveGameSessionRequest(string SessionId);
+@freezed
+class LeaveSessionRequest with _$LeaveSessionRequest {
+  const factory LeaveSessionRequest({
+    required String sessionId,
+  }) = _LeaveSessionRequest;
 
-class JoinSessionResponse {
-  final String sessionId;
-  final GameSession session;
+  factory LeaveSessionRequest.fromJson(Map<String, dynamic> json) => _$LeaveSessionRequestFromJson(json);
+}
 
-  JoinSessionResponse({required this.sessionId, required this.session});
+/// GameSessionListResponse matching backend C# record exactly
+/// public readonly record struct GameSessionListResponse(GameSessionResponse[] Sessions, int TotalCount, int Page, int PageSize);
+@freezed
+class GameSessionListResponse with _$GameSessionListResponse {
+  const factory GameSessionListResponse({
+    required List<GameSession> sessions,
+    required int totalCount,
+    required int page,
+    required int pageSize,
+  }) = _GameSessionListResponse;
 
-  factory JoinSessionResponse.fromJson(Map<String, dynamic> json) {
-    return JoinSessionResponse(
-      sessionId: json['sessionId'],
-      session: GameSession.fromJson(json['session']),
-    );
-  }
+  factory GameSessionListResponse.fromJson(Map<String, dynamic> json) => _$GameSessionListResponseFromJson(json);
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../../config/api_config.dart';
+import '../api/models/signalr_events.dart';
 
 enum SignalRConnectionStatus {
   disconnected,
@@ -27,14 +28,16 @@ class SignalRService {
   // Stream controllers for connection status and events
   final StreamController<SignalRConnectionStatus> _statusController =
       StreamController<SignalRConnectionStatus>.broadcast();
-  final StreamController<Map<String, dynamic>> _gameEventController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<SignalREvent> _gameEventController =
+      StreamController<SignalREvent>.broadcast();
+  final StreamController<SignalRErrorEvent> _errorEventController =
+      StreamController<SignalRErrorEvent>.broadcast();
 
   // Getters
   SignalRConnectionStatus get status => _status;
   Stream<SignalRConnectionStatus> get statusStream => _statusController.stream;
-  Stream<Map<String, dynamic>> get gameEventStream =>
-      _gameEventController.stream;
+  Stream<SignalREvent> get gameEventStream => _gameEventController.stream;
+  Stream<SignalRErrorEvent> get errorEventStream => _errorEventController.stream;
   bool get isConnected => _status == SignalRConnectionStatus.connected;
   HubConnection? get connection => _connection;
 
@@ -93,57 +96,172 @@ class SignalRService {
     debugPrint('SignalR: Connection handlers set up');
   }
 
-  /// Set up game event handlers
+  /// Set up game event handlers with type-safe event parsing
   void _setupGameEventHandlers() {
     if (_connection == null) return;
 
-    // Player events
+    // Connection events
     _connection!.on('PlayerJoined', (message) {
       debugPrint('SignalR: PlayerJoined received: $message');
-      _gameEventController.add({
-        'type': 'PlayerJoined',
-        'data': message?.first,
-      });
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = PlayerJoinedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing PlayerJoined event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse PlayerJoined event'));
+      }
     });
 
     _connection!.on('PlayerLeft', (message) {
       debugPrint('SignalR: PlayerLeft received: $message');
-      _gameEventController.add({'type': 'PlayerLeft', 'data': message?.first});
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = PlayerLeftEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing PlayerLeft event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse PlayerLeft event'));
+      }
     });
 
-    // Game events
+    // Game action events
     _connection!.on('CardPlayed', (message) {
       debugPrint('SignalR: CardPlayed received: $message');
-      _gameEventController.add({'type': 'CardPlayed', 'data': message?.first});
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = CardPlayedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing CardPlayed event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse CardPlayed event'));
+      }
     });
 
     _connection!.on('CardDrawn', (message) {
       debugPrint('SignalR: CardDrawn received: $message');
-      _gameEventController.add({'type': 'CardDrawn', 'data': message?.first});
-    });
-
-    _connection!.on('GameMessage', (message) {
-      debugPrint('SignalR: GameMessage received: $message');
-      _gameEventController.add({'type': 'GameMessage', 'data': message?.first});
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = CardDrawnEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing CardDrawn event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse CardDrawn event'));
+      }
     });
 
     _connection!.on('SuitChanged', (message) {
       debugPrint('SignalR: SuitChanged received: $message');
-      _gameEventController.add({'type': 'SuitChanged', 'data': message?.first});
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = SuitChangedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing SuitChanged event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse SuitChanged event'));
+      }
     });
 
+    _connection!.on('GameMessage', (message) {
+      debugPrint('SignalR: GameMessage received: $message');
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = GameMessageEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing GameMessage event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse GameMessage event'));
+      }
+    });
+
+    // Game state events
     _connection!.on('GameStateUpdated', (message) {
       debugPrint('SignalR: GameStateUpdated received: $message');
-      _gameEventController.add({
-        'type': 'GameStateUpdated',
-        'data': message?.first,
-      });
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = GameStateUpdatedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing GameStateUpdated event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse GameStateUpdated event'));
+      }
+    });
+
+    _connection!.on('GameStarted', (message) {
+      debugPrint('SignalR: GameStarted received: $message');
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = GameStartedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing GameStarted event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse GameStarted event'));
+      }
+    });
+
+    _connection!.on('GameEnded', (message) {
+      debugPrint('SignalR: GameEnded received: $message');
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = GameEndedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing GameEnded event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse GameEnded event'));
+      }
+    });
+
+    _connection!.on('TurnChanged', (message) {
+      debugPrint('SignalR: TurnChanged received: $message');
+      try {
+        if (message != null && message.isNotEmpty) {
+          final eventData = message.first as Map<String, dynamic>;
+          final event = TurnChangedEvent.fromJson(eventData);
+          _gameEventController.add(event);
+        }
+      } catch (e) {
+        debugPrint('SignalR: Error parsing TurnChanged event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse TurnChanged event'));
+      }
     });
 
     // Error handling
     _connection!.on('Error', (message) {
       debugPrint('SignalR: Error received: $message');
-      _gameEventController.add({'type': 'Error', 'data': message?.first});
+      try {
+        String errorMessage = 'Unknown SignalR error';
+        if (message != null && message.isNotEmpty) {
+          // Handle both string and object error messages
+          if (message.first is String) {
+            errorMessage = message.first as String;
+          } else if (message.first is Map<String, dynamic>) {
+            final errorData = message.first as Map<String, dynamic>;
+            errorMessage = errorData['message'] as String? ?? 'SignalR error occurred';
+          }
+        }
+        _errorEventController.add(SignalRErrorEvent(message: errorMessage));
+      } catch (e) {
+        debugPrint('SignalR: Error parsing Error event: $e');
+        _errorEventController.add(SignalRErrorEvent(message: 'Failed to parse error event'));
+      }
     });
   }
 
@@ -344,6 +462,7 @@ class SignalRService {
     _reconnectTimer?.cancel();
     _statusController.close();
     _gameEventController.close();
+    _errorEventController.close();
     disconnect();
   }
 }

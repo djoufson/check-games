@@ -427,28 +427,28 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     );
   }
 
-  Color _getStatusColor(SessionStatus status) {
+  Color _getStatusColor(GameSessionStatus status) {
     switch (status) {
-      case SessionStatus.waiting:
+      case GameSessionStatus.waitingForPlayers:
         return AppColors.secondary;
-      case SessionStatus.inProgress:
+      case GameSessionStatus.inProgress:
         return AppColors.primary;
-      case SessionStatus.completed:
+      case GameSessionStatus.completed:
         return AppColors.mediumGrey;
-      case SessionStatus.cancelled:
+      case GameSessionStatus.cancelled:
         return AppColors.error;
     }
   }
 
-  String _getStatusText(SessionStatus status) {
+  String _getStatusText(GameSessionStatus status) {
     switch (status) {
-      case SessionStatus.waiting:
+      case GameSessionStatus.waitingForPlayers:
         return 'Waiting';
-      case SessionStatus.inProgress:
+      case GameSessionStatus.inProgress:
         return 'In Progress';
-      case SessionStatus.completed:
+      case GameSessionStatus.completed:
         return 'Completed';
-      case SessionStatus.cancelled:
+      case GameSessionStatus.cancelled:
         return 'Cancelled';
     }
   }

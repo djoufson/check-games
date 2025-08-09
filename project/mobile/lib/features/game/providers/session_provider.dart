@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/api/models/session_models.dart';
+import '../../../core/api/models/signalr_events.dart';
 import '../../../core/api/services/session_service.dart';
 import '../../../core/services/signalr_service.dart';
 
@@ -11,7 +12,8 @@ class SessionProvider with ChangeNotifier {
   GameSession? _currentSession;
   bool _isLoading = false;
   String? _error;
-  StreamSubscription<Map<String, dynamic>>? _signalRSubscription;
+  StreamSubscription<SignalREvent>? _signalRSubscription;
+  StreamSubscription<SignalRErrorEvent>? _signalRErrorSubscription;
 
   SessionProvider({SessionService? sessionService})
     : _sessionService = sessionService ?? SessionService();
@@ -29,16 +31,16 @@ class SessionProvider with ChangeNotifier {
 
   /// Create a new game session
   Future<bool> createSession({
-    required String sessionName,
-    int maxPlayers = 4,
+    String? description,
+    required int maxPlayersLimit,
   }) async {
     _setLoading(true);
     _clearError();
 
     try {
       final request = CreateSessionRequest(
-        name: sessionName,
-        maxPlayers: maxPlayers,
+        description: description,
+        maxPlayersLimit: maxPlayersLimit,
       );
 
       final response = await _sessionService.createSession(request);
@@ -93,12 +95,8 @@ class SessionProvider with ChangeNotifier {
     _clearError();
 
     try {
-      final request = JoinSessionRequest(
-        sessionCode: sessionCode,
-        playerName: playerName,
-      );
-
-      final response = await _sessionService.joinSession(request);
+      final request = JoinSessionRequest(playerName: playerName);
+      final response = await _sessionService.joinSession(sessionCode, request);
 
       if (response.success && response.data != null) {
         _currentSession = response.data!.session;
@@ -173,111 +171,213 @@ class SessionProvider with ChangeNotifier {
     }
   }
 
-  /// Setup SignalR event listeners
+  /// Setup SignalR event listeners with type-safe event handling
   void _setupSignalRListeners() {
     _signalRSubscription?.cancel();
+    _signalRErrorSubscription?.cancel();
+
     _signalRSubscription = _signalRService.gameEventStream.listen(
       _handleSignalREvent,
       onError: (error) {
-        debugPrint('SessionProvider: SignalR error: $error');
+        debugPrint('SessionProvider: SignalR event stream error: $error');
+        _setError('Real-time connection error occurred');
+      },
+    );
+
+    _signalRErrorSubscription = _signalRService.errorEventStream.listen(
+      _handleSignalRErrorEvent,
+      onError: (error) {
+        debugPrint('SessionProvider: SignalR error stream error: $error');
       },
     );
   }
 
-  /// Handle SignalR events
-  void _handleSignalREvent(Map<String, dynamic> event) {
+  /// Handle type-safe SignalR events
+  void _handleSignalREvent(SignalREvent event) {
     if (_currentSession == null) return;
 
-    final eventType = event['type'] as String?;
-    final data = event['data'];
+    debugPrint('SessionProvider: Received SignalR event: ${event.runtimeType}');
 
-    debugPrint('SessionProvider: Received SignalR event: $eventType');
-
-    switch (eventType) {
-      case 'PlayerJoined':
-        _handlePlayerJoined(data);
+    switch (event) {
+      case PlayerJoinedEvent():
+        _handlePlayerJoined(event);
         break;
-      case 'PlayerLeft':
-        _handlePlayerLeft(data);
+      case PlayerLeftEvent():
+        _handlePlayerLeft(event);
         break;
-      case 'GameStateUpdated':
-        _handleGameStateUpdated(data);
+      case GameStateUpdatedEvent():
+        _handleGameStateUpdated(event);
         break;
-      case 'Error':
-        _handleSignalRError(data);
+      case GameStartedEvent():
+        _handleGameStarted(event);
+        break;
+      case GameEndedEvent():
+        _handleGameEnded(event);
+        break;
+      case TurnChangedEvent():
+        _handleTurnChanged(event);
+        break;
+      case CardPlayedEvent():
+        _handleCardPlayed(event);
+        break;
+      case CardDrawnEvent():
+        _handleCardDrawn(event);
+        break;
+      case SuitChangedEvent():
+        _handleSuitChanged(event);
+        break;
+      case GameMessageEvent():
+        _handleGameMessage(event);
         break;
       default:
-        debugPrint('SessionProvider: Unhandled SignalR event: $eventType');
+        debugPrint('SessionProvider: Unhandled SignalR event: ${event.runtimeType}');
     }
   }
 
-  void _handlePlayerJoined(dynamic data) {
-    if (data == null || _currentSession == null) return;
+  /// Handle SignalR error events
+  void _handleSignalRErrorEvent(SignalRErrorEvent errorEvent) {
+    debugPrint('SessionProvider: SignalR error: ${errorEvent.message}');
+    _setError(errorEvent.message);
+  }
+
+  void _handlePlayerJoined(PlayerJoinedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
 
     try {
-      // final playerData = data as Map<String, dynamic>;
-      // final newPlayer = SessionPlayer.fromJson(playerData);
-
-      // // Check if player already exists
-      // final existingPlayerIndex = _currentSession!.players
-      //     .indexWhere((p) => p == newPlayer.name);
-
-      // if (existingPlayerIndex == -1) {
-      //   // Add new player
-      //   _currentSession = _currentSession!.copyWith(
-      //     players: [..._currentSession!.players, newPlayer.name],
-      //   );
-      //   notifyListeners();
-      // }
+      // Check if player already exists
+      if (!_currentSession!.players.contains(event.userName)) {
+        // Add new player to the session
+        _currentSession = _currentSession!.copyWith(
+          players: [..._currentSession!.players, event.userName],
+          currentPlayerCount: _currentSession!.currentPlayerCount + 1,
+        );
+        notifyListeners();
+        debugPrint('SessionProvider: Player joined: ${event.userName}');
+      }
     } catch (e) {
       debugPrint('SessionProvider: Error handling PlayerJoined: $e');
     }
   }
 
-  void _handlePlayerLeft(dynamic data) {
-    if (data == null || _currentSession == null) return;
+  void _handlePlayerLeft(PlayerLeftEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
 
     try {
-      final playerData = data as Map<String, dynamic>;
-      final playerId = playerData['playerId'] as String?;
-
-      if (playerId != null) {
-        // Remove player from list
-        _currentSession = _currentSession!.copyWith(
-          players: _currentSession!.players
-              .where((p) => p != playerId)
-              .toList(),
-        );
-        notifyListeners();
-      }
+      // Remove player from the session
+      final updatedPlayers = _currentSession!.players
+          .where((player) => player != event.userName)
+          .toList();
+      
+      _currentSession = _currentSession!.copyWith(
+        players: updatedPlayers,
+        currentPlayerCount: updatedPlayers.length,
+      );
+      notifyListeners();
+      debugPrint('SessionProvider: Player left: ${event.userName}');
     } catch (e) {
       debugPrint('SessionProvider: Error handling PlayerLeft: $e');
     }
   }
 
-  void _handleGameStateUpdated(dynamic data) {
-    if (data == null || _currentSession == null) return;
+  void _handleGameStateUpdated(GameStateUpdatedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
 
     try {
-      final sessionData = data as Map<String, dynamic>;
-      final updatedSession = GameSession.fromJson(sessionData);
-      _currentSession = updatedSession;
-      notifyListeners();
+      // Update the current session with new game state data
+      if (event.gameState.containsKey('session')) {
+        final sessionData = event.gameState['session'] as Map<String, dynamic>;
+        final updatedSession = GameSession.fromJson(sessionData);
+        _currentSession = updatedSession;
+        notifyListeners();
+        debugPrint('SessionProvider: Game state updated for session: ${event.sessionId}');
+      }
     } catch (e) {
       debugPrint('SessionProvider: Error handling GameStateUpdated: $e');
     }
   }
 
-  void _handleSignalRError(dynamic data) {
-    if (data == null) return;
+  void _handleGameStarted(GameStartedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
 
     try {
-      final errorData = data as Map<String, dynamic>;
-      final errorMessage =
-          errorData['message'] as String? ?? 'SignalR error occurred';
-      _setError(errorMessage);
+      _currentSession = _currentSession!.copyWith(
+        status: GameSessionStatus.inProgress,
+        startedAt: event.timestamp,
+      );
+      notifyListeners();
+      debugPrint('SessionProvider: Game started for session: ${event.sessionId}');
     } catch (e) {
-      debugPrint('SessionProvider: Error handling SignalR error: $e');
+      debugPrint('SessionProvider: Error handling GameStarted: $e');
+    }
+  }
+
+  void _handleGameEnded(GameEndedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
+
+    try {
+      _currentSession = _currentSession!.copyWith(
+        status: GameSessionStatus.completed,
+        endedAt: event.timestamp,
+      );
+      notifyListeners();
+      debugPrint('SessionProvider: Game ended for session: ${event.sessionId}');
+    } catch (e) {
+      debugPrint('SessionProvider: Error handling GameEnded: $e');
+    }
+  }
+
+  void _handleTurnChanged(TurnChangedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
+
+    try {
+      // For now, just log the turn change - we can expand this later
+      debugPrint('SessionProvider: Turn changed from ${event.currentPlayerId} to ${event.nextPlayerId}');
+    } catch (e) {
+      debugPrint('SessionProvider: Error handling TurnChanged: $e');
+    }
+  }
+
+  void _handleCardPlayed(CardPlayedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
+
+    try {
+      // For now, just log the card play - we can expand this later
+      debugPrint('SessionProvider: Card played by ${event.userName} in session: ${event.sessionId}');
+    } catch (e) {
+      debugPrint('SessionProvider: Error handling CardPlayed: $e');
+    }
+  }
+
+  void _handleCardDrawn(CardDrawnEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
+
+    try {
+      // For now, just log the card draw - we can expand this later
+      debugPrint('SessionProvider: Card drawn by ${event.userName} in session: ${event.sessionId}');
+    } catch (e) {
+      debugPrint('SessionProvider: Error handling CardDrawn: $e');
+    }
+  }
+
+  void _handleSuitChanged(SuitChangedEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
+
+    try {
+      // For now, just log the suit change - we can expand this later
+      debugPrint('SessionProvider: Suit changed to ${event.newSuit} by ${event.userName}');
+    } catch (e) {
+      debugPrint('SessionProvider: Error handling SuitChanged: $e');
+    }
+  }
+
+  void _handleGameMessage(GameMessageEvent event) {
+    if (_currentSession == null || event.sessionId != _currentSession!.id) return;
+
+    try {
+      // For now, just log the message - we can expand this later with a message list
+      debugPrint('SessionProvider: Game message from ${event.userName}: ${event.message}');
+    } catch (e) {
+      debugPrint('SessionProvider: Error handling GameMessage: $e');
     }
   }
 
@@ -302,7 +402,9 @@ class SessionProvider with ChangeNotifier {
 
   void _cleanup() {
     _signalRSubscription?.cancel();
+    _signalRErrorSubscription?.cancel();
     _signalRSubscription = null;
+    _signalRErrorSubscription = null;
     _currentSession = null;
     _error = null;
     _isLoading = false;
@@ -312,6 +414,7 @@ class SessionProvider with ChangeNotifier {
   @override
   void dispose() {
     _signalRSubscription?.cancel();
+    _signalRErrorSubscription?.cancel();
     _sessionService.dispose();
     super.dispose();
   }
