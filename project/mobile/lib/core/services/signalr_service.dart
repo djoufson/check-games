@@ -52,10 +52,22 @@ class SignalRService {
       // TODO: Update with actual SignalR hub URL
       const String hubUrl = 'http://localhost:5277/gamehub';
 
-      _connection = HubConnectionBuilder()
-          .withUrl(hubUrl)
-          .withAutomaticReconnect()
-          .build();
+      final connectionBuilder = HubConnectionBuilder();
+      
+      // Configure URL with access token in headers if available  
+      if (_accessToken != null && _accessToken!.isNotEmpty) {
+        _connection = connectionBuilder
+            .withUrl(hubUrl, options: HttpConnectionOptions(
+              accessTokenFactory: () => Future.value(_accessToken),
+            ))
+            .withAutomaticReconnect()
+            .build();
+      } else {
+        _connection = connectionBuilder
+            .withUrl(hubUrl)
+            .withAutomaticReconnect()
+            .build();
+      }
 
       _setupConnectionHandlers();
       _setupGameEventHandlers();

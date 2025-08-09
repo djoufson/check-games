@@ -43,6 +43,19 @@ public static class Extensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
                     ClockSkew = TimeSpan.Zero
                 };
+
+
+                // Handle connections authentication to SignalR
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Headers["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken))
+                            context.Token = accessToken;
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         services.AddAuthorization();
