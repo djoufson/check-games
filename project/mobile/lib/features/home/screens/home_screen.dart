@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/widgets/connection_status_widget.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,9 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          // Connection status indicator
+          const ConnectionStatusWidget(isCompact: true, showText: false),
+          const SizedBox(width: 8),
           Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
               return PopupMenuButton<String>(
@@ -109,181 +113,202 @@ class HomeScreen extends StatelessWidget {
           return Container(
             decoration: const BoxDecoration(gradient: AppColors.softGradient),
             child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Welcome Section
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              authProvider.isAnonymous
-                                  ? 'Welcome, Guest!'
-                                  : 'Welcome back,',
-                              style: AppTypography.bodyLarge.copyWith(
-                                color: AppColors.mediumGrey,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              authProvider.isAnonymous
-                                  ? 'Guest Player'
-                                  : user?.displayName ??
-                                        user?.userName ??
-                                        'Player',
-                              style: AppTypography.headlineMedium.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              authProvider.isAnonymous
-                                  ? 'Join games or sign up for full features!'
-                                  : 'Ready for another game?',
-                              style: AppTypography.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+              child: Column(
+                children: [
+                  // Connection status banner
+                  const ConnectionStatusBanner(),
 
-                    const SizedBox(height: 32),
-
-                    // Quick Actions
-                    Text('Quick Actions', style: AppTypography.headlineSmall),
-                    const SizedBox(height: 16),
-
-                    // Action Buttons
-                    Expanded(
-                      child: GridView.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.1, // Adjust card aspect ratio
-                        physics: const BouncingScrollPhysics(),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildActionCard(
-                            context,
-                            authProvider: authProvider,
-                            title: 'Create Game',
-                            subtitle: 'Start a new session',
-                            icon: Icons.add_circle,
-                            color: AppColors.primary,
-                            enabled: authProvider.canCreateGames,
-                            onTap: () {
-                              if (authProvider.canCreateGames) {
-                                // TODO: Navigate to create game screen
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Create game feature coming soon!',
-                                      style: AppTypography.bodyMedium,
+                          // Welcome Section
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    authProvider.isAnonymous
+                                        ? 'Welcome, Guest!'
+                                        : 'Welcome back,',
+                                    style: AppTypography.bodyLarge.copyWith(
+                                      color: AppColors.mediumGrey,
                                     ),
-                                    backgroundColor: AppColors.secondary,
                                   ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Please sign in to create games',
-                                      style: AppTypography.bodyMedium,
-                                    ),
-                                    backgroundColor: AppColors.warmCoral,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    authProvider.isAnonymous
+                                        ? 'Guest Player'
+                                        : user?.displayName ??
+                                              user?.userName ??
+                                              'Player',
+                                    style: AppTypography.headlineMedium
+                                        .copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                );
-                              }
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            authProvider: authProvider,
-                            title: 'Join Game',
-                            subtitle: 'Enter game code',
-                            icon: Icons.group_add,
-                            color: AppColors.secondary,
-                            enabled: authProvider.canJoinGames,
-                            onTap: () {
-                              // TODO: Navigate to join game screen
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Join game feature coming soon!',
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    authProvider.isAnonymous
+                                        ? 'Join games or sign up for full features!'
+                                        : 'Ready for another game?',
                                     style: AppTypography.bodyMedium,
                                   ),
-                                  backgroundColor: AppColors.secondary,
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // Quick Actions
+                          Text(
+                            'Quick Actions',
+                            style: AppTypography.headlineSmall,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Action Buttons
+                          Expanded(
+                            child: GridView.count(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.1, // Adjust card aspect ratio
+                              physics: const BouncingScrollPhysics(),
+                              children: [
+                                _buildActionCard(
+                                  context,
+                                  authProvider: authProvider,
+                                  title: 'Create Game',
+                                  subtitle: 'Start a new session',
+                                  icon: Icons.add_circle,
+                                  color: AppColors.primary,
+                                  enabled: authProvider.canCreateGames,
+                                  onTap: () {
+                                    if (authProvider.canCreateGames) {
+                                      // TODO: Navigate to create game screen
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Create game feature coming soon!',
+                                            style: AppTypography.bodyMedium,
+                                          ),
+                                          backgroundColor: AppColors.secondary,
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Please sign in to create games',
+                                            style: AppTypography.bodyMedium,
+                                          ),
+                                          backgroundColor: AppColors.warmCoral,
+                                        ),
+                                      );
+                                    }
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            authProvider: authProvider,
-                            title: 'Game History',
-                            subtitle: 'View past games',
-                            icon: Icons.history,
-                            color: AppColors.warmCoral,
-                            enabled: authProvider.isAuthenticated,
-                            onTap: () {
-                              if (authProvider.isAuthenticated) {
-                                // TODO: Navigate to game history screen
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Game history feature coming soon!',
-                                      style: AppTypography.bodyMedium,
-                                    ),
-                                    backgroundColor: AppColors.secondary,
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Please sign in to view game history',
-                                      style: AppTypography.bodyMedium,
-                                    ),
-                                    backgroundColor: AppColors.warmCoral,
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            authProvider: authProvider,
-                            title: 'Settings',
-                            subtitle: 'Preferences',
-                            icon: Icons.settings,
-                            color: AppColors.mediumGrey,
-                            enabled: authProvider.canAccessSettings,
-                            onTap: () {
-                              // TODO: Navigate to settings screen
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Settings feature coming soon!',
-                                    style: AppTypography.bodyMedium,
-                                  ),
-                                  backgroundColor: AppColors.secondary,
+                                _buildActionCard(
+                                  context,
+                                  authProvider: authProvider,
+                                  title: 'Join Game',
+                                  subtitle: 'Enter game code',
+                                  icon: Icons.group_add,
+                                  color: AppColors.secondary,
+                                  enabled: authProvider.canJoinGames,
+                                  onTap: () {
+                                    // TODO: Navigate to join game screen
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Join game feature coming soon!',
+                                          style: AppTypography.bodyMedium,
+                                        ),
+                                        backgroundColor: AppColors.secondary,
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
+                                _buildActionCard(
+                                  context,
+                                  authProvider: authProvider,
+                                  title: 'Game History',
+                                  subtitle: 'View past games',
+                                  icon: Icons.history,
+                                  color: AppColors.warmCoral,
+                                  enabled: authProvider.isAuthenticated,
+                                  onTap: () {
+                                    if (authProvider.isAuthenticated) {
+                                      // TODO: Navigate to game history screen
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Game history feature coming soon!',
+                                            style: AppTypography.bodyMedium,
+                                          ),
+                                          backgroundColor: AppColors.secondary,
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Please sign in to view game history',
+                                            style: AppTypography.bodyMedium,
+                                          ),
+                                          backgroundColor: AppColors.warmCoral,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                                _buildActionCard(
+                                  context,
+                                  authProvider: authProvider,
+                                  title: 'Settings',
+                                  subtitle: 'Preferences',
+                                  icon: Icons.settings,
+                                  color: AppColors.mediumGrey,
+                                  enabled: authProvider.canAccessSettings,
+                                  onTap: () {
+                                    // TODO: Navigate to settings screen
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Settings feature coming soon!',
+                                          style: AppTypography.bodyMedium,
+                                        ),
+                                        backgroundColor: AppColors.secondary,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ], // Close GridView children
+                            ), // Close GridView.count
+                          ), // Close Expanded
+                        ], // Close Column children
+                      ), // Close Column
+                    ), // Close Padding
+                  ), // Close Expanded
+                ], // Close Column children (line 116 Column)
+              ), // Close Column (line 116)
+            ), // Close SafeArea
+          ); // Close Container
         },
       ),
     );

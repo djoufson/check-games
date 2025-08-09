@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/models/auth_models.dart';
 import '../api/services/auth_service.dart';
+import '../services/signalr_service.dart';
 
 enum AuthStatus {
   initial,
@@ -15,6 +16,7 @@ enum AuthStatus {
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
+  final SignalRService _signalRService = SignalRService();
   
   AuthStatus _status = AuthStatus.initial;
   UserProfile? _user;
@@ -56,12 +58,14 @@ class AuthProvider with ChangeNotifier {
         if (_tokens!.expiresAt.isAfter(DateTime.now().add(const Duration(minutes: 5)))) {
           _status = AuthStatus.authenticated;
           _scheduleTokenRefresh();
+          await _initializeSignalR();
         } else {
           // Try to refresh token
           await _refreshToken();
         }
       } else if (isAnonymous) {
         _status = AuthStatus.anonymous;
+        await _initializeSignalR();
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -137,6 +141,7 @@ class AuthProvider with ChangeNotifier {
       await _storeAuth(_tokens!, _user!);
       _status = AuthStatus.authenticated;
       _scheduleTokenRefresh();
+      await _initializeSignalR();
       notifyListeners();
       return true;
     } else {
@@ -163,6 +168,7 @@ class AuthProvider with ChangeNotifier {
       }
       _status = AuthStatus.authenticated;
       _scheduleTokenRefresh();
+      await _updateSignalRToken();
     } else {
       await logout();
     }
@@ -199,12 +205,16 @@ class AuthProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_anonymous', true);
     
+    // Initialize SignalR for anonymous user
+    await _initializeSignalR();
+    
     notifyListeners();
   }
 
   /// Logout the user
   Future<void> logout() async {
     _tokenRefreshTimer?.cancel();
+    await _signalRService.disconnect();
     _status = AuthStatus.unauthenticated;
     _user = null;
     _tokens = null;
@@ -232,6 +242,26 @@ class AuthProvider with ChangeNotifier {
     });
 
     return errorMessages.join('\n');
+  }
+
+  /// Initialize SignalR connection
+  Future<void> _initializeSignalR() async {
+    try {
+      await _signalRService.initialize(accessToken: _tokens?.accessToken);
+      debugPrint('Auth Provider: SignalR initialized');
+    } catch (e) {
+      debugPrint('Auth Provider: Error initializing SignalR: $e');
+    }
+  }
+
+  /// Update SignalR access token
+  Future<void> _updateSignalRToken() async {
+    try {
+      await _signalRService.updateAccessToken(_tokens?.accessToken);
+      debugPrint('Auth Provider: SignalR token updated');
+    } catch (e) {
+      debugPrint('Auth Provider: Error updating SignalR token: $e');
+    }
   }
 
   @override
