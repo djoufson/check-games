@@ -145,12 +145,13 @@ class SessionService {
   }
 
   /// Join a session using session code
-  Future<ApiResponse<GameSession>> joinSession(
+  Future<ApiResponse<JoinSessionResponse>> joinSession(
     JoinSessionRequest request,
   ) async {
     try {
+      final sessionCode = request.sessionCode;
       final response = await http.post(
-        Uri.parse('$_baseUrl/sessions/join'),
+        Uri.parse('$_baseUrl/sessions/$sessionCode/join'),
         headers: _headers,
         body: jsonEncode(request.toJson()),
       );
@@ -161,7 +162,7 @@ class SessionService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        return ApiResponse.success(GameSession.fromJson(responseData));
+        return ApiResponse.success(JoinSessionResponse.fromJson(responseData));
       } else if (response.statusCode == 400) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         if (errorData.containsKey('errors')) {

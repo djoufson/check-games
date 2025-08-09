@@ -139,3 +139,26 @@ class JoinSessionRequest {
     };
   }
 }
+
+/*
+
+public readonly record struct JoinSessionResponse(
+    string SessionId,
+    string AssignedPlayerName,
+    GameSessionResponse Session);
+
+*/
+
+class JoinSessionResponse {
+  final String sessionId;
+  final GameSession session;
+
+  JoinSessionResponse({required this.sessionId, required this.session});
+
+  factory JoinSessionResponse.fromJson(Map<String, dynamic> json) {
+    return JoinSessionResponse(
+      sessionId: json['sessionId'],
+      session: GameSession.fromJson(json['session']),
+    );
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/game/widgets/join_session_dialog.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -204,18 +205,8 @@ class HomeScreen extends StatelessWidget {
                                   icon: Icons.group_add,
                                   color: AppColors.secondary,
                                   enabled: authProvider.canJoinGames,
-                                  onTap: () {
-                                    // TODO: Navigate to join game screen
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Join game feature coming soon!',
-                                          style: AppTypography.bodyMedium,
-                                        ),
-                                        backgroundColor: AppColors.secondary,
-                                      ),
-                                    );
-                                  },
+                                  onTap: () =>
+                                      _handleJoinGame(context, authProvider),
                                 ),
                                 _buildActionCard(
                                   context,
@@ -275,17 +266,17 @@ class HomeScreen extends StatelessWidget {
                                     );
                                   },
                                 ),
-                              ], // Close GridView children
-                            ), // Close GridView.count
-                          ), // Close Expanded
-                        ], // Close Column children
-                      ), // Close Column
-                    ), // Close Padding
-                  ), // Close Expanded
-                ], // Close Column children (line 116 Column)
-              ), // Close Column (line 116)
-            ), // Close SafeArea
-          ); // Close Container
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         },
       ),
     );
@@ -410,6 +401,24 @@ class HomeScreen extends StatelessWidget {
     });
   }
 
+  /// Handle create game action
+  void _handleJoinGame(BuildContext context, AuthProvider authProvider) {
+    showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) => const JoinSessionDialog(),
+    ).then((result) {
+      if (result != null && context.mounted) {
+        // {'sessionCode': sessionCode, 'playerName': playerName}
+        _joinGameSession(
+          context,
+          authProvider,
+          sessionCode: result['sessionCode'] as String,
+          playerName: result['playerName'] as String,
+        );
+      }
+    });
+  }
+
   /// Create a new game session
   Future<void> _createGameSession(
     BuildContext context,
@@ -451,6 +460,88 @@ class HomeScreen extends StatelessWidget {
         Navigator.of(context).pop();
 
         if (success && sessionProvider.currentSession != null) {
+          // Navigate to game session screen
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => GameSessionScreen(
+                sessionId: sessionProvider.currentSession!.id,
+              ),
+            ),
+          );
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                sessionProvider.error ?? 'Failed to create session',
+                style: AppTypography.bodyMedium,
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'An unexpected error occurred',
+              style: AppTypography.bodyMedium,
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Join a game session
+  Future<void> _joinGameSession(
+    BuildContext context,
+    AuthProvider authProvider, {
+    required String sessionCode,
+    required String playerName,
+  }) async {
+    final sessionProvider = context.read<SessionProvider>();
+
+    // Update session provider with current access token
+    sessionProvider.updateAccessToken(authProvider.accessToken);
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text('Joining session...', style: AppTypography.bodyMedium),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      final success = await sessionProvider.joinSession(
+        sessionCode,
+        playerName,
+      );
+
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+
+        if (success && sessionProvider.currentSession != null) {
+          
           // Navigate to game session screen
           Navigator.of(context).push(
             MaterialPageRoute(

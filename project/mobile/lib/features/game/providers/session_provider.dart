@@ -88,7 +88,7 @@ class SessionProvider with ChangeNotifier {
   }
 
   /// Join a session using session code
-  Future<bool> joinSession(String sessionCode, {String? playerName}) async {
+  Future<bool> joinSession(String sessionCode, String? playerName) async {
     _setLoading(true);
     _clearError();
 
@@ -101,7 +101,7 @@ class SessionProvider with ChangeNotifier {
       final response = await _sessionService.joinSession(request);
 
       if (response.success && response.data != null) {
-        _currentSession = response.data!;
+        _currentSession = response.data!.session;
         await _joinSignalRSession(_currentSession!.id);
         _setupSignalRListeners();
         _setLoading(false);

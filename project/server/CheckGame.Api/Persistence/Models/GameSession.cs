@@ -34,8 +34,8 @@ public class GameSession
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     public static GameSession Create(
+        string userName,
         string createdByUserId,
-        string name,
         int maxPlayers)
     {
         if (maxPlayers <= 1)
@@ -48,15 +48,12 @@ public class GameSession
             Id = Guid.NewGuid().ToString(),
             Code = GenerateUniqueSessionCode(),
             CreatedByUserId = createdByUserId,
-            Name = name,
+            Name = string.Empty,
             Status = GameSessionStatus.WaitingForPlayers,
             CreatedAt = DateTime.UtcNow,
-            MaxPlayers = maxPlayers
+            MaxPlayers = maxPlayers,
+            Players = [userName]
         };
-
-        // Add the creator as the first player
-        var creatorPlayerName = $"Player_{createdByUserId}";
-        session.Players = [creatorPlayerName];
 
         return session;
     }

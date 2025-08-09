@@ -45,7 +45,13 @@ public class GameSessionService : IGameSessionService
         {
             try
             {
-                session = GameSession.Create(createdByUserId, request.Name, maxPlayers);
+                var userName = await _context.Users
+                    .AsNoTracking()
+                    .Where(u => u.Id == createdByUserId)
+                    .Select(u => u.UserName)
+                    .FirstOrDefaultAsync();
+
+                session = GameSession.Create(userName ?? createdByUserId, createdByUserId, maxPlayers);
                 _context.GameSessions.Add(session);
                 await _context.SaveChangesAsync();
 
@@ -71,11 +77,11 @@ public class GameSessionService : IGameSessionService
         throw new InvalidOperationException("Failed to create session after multiple attempts due to code collisions");
     }
 
-    public async Task<JoinSessionResponse?> JoinSessionAsync(string? userId, JoinGameSessionRequest request)
+    public async Task<JoinSessionResponse?> JoinSessionAsync(string? userId, string sessionCode, JoinGameSessionRequest request)
     {
         var session = await _context.GameSessions
             .Include(s => s.CreatedByUser)
-            .FirstOrDefaultAsync(s => s.Id == request.SessionId);
+            .FirstOrDefaultAsync(s => s.Code == sessionCode);
 
         if (session == null || !session.CanJoin())
         {

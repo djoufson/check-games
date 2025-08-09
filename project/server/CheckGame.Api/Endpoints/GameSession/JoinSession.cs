@@ -9,6 +9,7 @@ namespace CheckGame.Api.Endpoints.GameSession;
 public partial class GameSessions
 {
     public static async Task<IResult> JoinSession(
+        [FromRoute] string sessionCode,
         [FromBody] JoinGameSessionRequest request,
         IGameSessionService gameSessionService,
         IValidator<JoinGameSessionRequest> validator,
@@ -19,7 +20,7 @@ public partial class GameSessions
         // Get user ID if authenticated, otherwise null for anonymous users
         var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        var response = await gameSessionService.JoinSessionAsync(userId, request);
+        var response = await gameSessionService.JoinSessionAsync(userId, sessionCode, request);
         if (response == null)
         {
             return Results.BadRequest("Cannot join session. Session might be full, not found, or already started.");
