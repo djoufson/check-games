@@ -1,8 +1,10 @@
 using CheckGame.Api.Contracts.Requests;
 using CheckGame.Api.Contracts.Responses;
+using CheckGame.Api.Hubs;
 using CheckGame.Api.Options;
 using CheckGame.Api.Persistence;
 using CheckGame.Api.Persistence.Models;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -13,15 +15,21 @@ public class GameSessionService : IGameSessionService
     private readonly AppDbContext _context;
     private readonly ILogger<GameSessionService> _logger;
     private readonly GameSessionOptions _gameSessionOptions;
+    private readonly IHubContext<GameHub, IGameClient> _hubContext;
+    private readonly IConnectionCacheService _connectionCacheService;
 
     public GameSessionService(
         AppDbContext context,
         ILogger<GameSessionService> logger,
-        IOptions<GameSessionOptions> gameSessionOptions)
+        IOptions<GameSessionOptions> gameSessionOptions,
+        IHubContext<GameHub, IGameClient> hubContext,
+        IConnectionCacheService connectionCacheService)
     {
         _context = context;
         _logger = logger;
         _gameSessionOptions = gameSessionOptions.Value;
+        _hubContext = hubContext;
+        _connectionCacheService = connectionCacheService;
     }
 
     public async Task<GameSessionResponse> CreateSessionAsync(string createdByUserId, CreateGameSessionRequest request)
@@ -36,6 +44,9 @@ public class GameSessionService : IGameSessionService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Created game session {SessionId} by user {UserId}", session.Id, createdByUserId);
+
+        // Automatically add the session creator to the SignalR group for real-time updates
+        await AddUserToSessionGroupAsync(createdByUserId, session.Id);
 
         return await MapToResponseAsync(session);
     }
@@ -84,6 +95,12 @@ public class GameSessionService : IGameSessionService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Player {PlayerName} joined session {SessionId}", playerName, session.Id);
+
+        // Automatically add the user to the SignalR group for real-time updates if authenticated
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await AddUserToSessionGroupAsync(userId, session.Id);
+        }
 
         var sessionResponse = await MapToResponseAsync(session);
         return new JoinSessionResponse(session.Id, playerName, sessionResponse);
@@ -244,5 +261,39 @@ public class GameSessionService : IGameSessionService
             session.EndedAt,
             session.CanJoin(),
             session.IsFull());
+    }
+
+    /// <summary>
+    /// Adds an authenticated user to a SignalR session group using their active connections
+    /// </summary>
+    private async Task AddUserToSessionGroupAsync(string userId, string sessionId)
+    {
+        try
+        {
+            // Get all active connections for the authenticated user
+            var userConnections = await _connectionCacheService.GetConnectionsAsync(userId);
+            
+            if (userConnections.Count == 0)
+            {
+                _logger.LogDebug("No active connections found for user {UserId} to add to session {SessionId}", userId, sessionId);
+                return;
+            }
+
+            // Add each connection to the SignalR session group
+            var groupName = $"GameSession_{sessionId}";
+            foreach (var connectionId in userConnections)
+            {
+                await _hubContext.Groups.AddToGroupAsync(connectionId, groupName);
+                _logger.LogDebug("Added connection {ConnectionId} for user {UserId} to SignalR group {GroupName}", 
+                    connectionId, userId, groupName);
+            }
+
+            _logger.LogInformation("Added {ConnectionCount} connections for user {UserId} to session group {SessionId}", 
+                userConnections.Count, userId, sessionId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding user {UserId} connections to session group {SessionId}", userId, sessionId);
+        }
     }
 }
