@@ -53,6 +53,7 @@ public static class Extensions
 
         // Register custom services
         services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IGameSessionService, Services.Impl.GameSessionService>();
 
         // Register exception handling
         services.AddExceptionHandler<GlobalExceptionHandler>();

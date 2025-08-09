@@ -643,10 +643,9 @@ public class GameState(
     /// <returns>List of winner IDs</returns>
     public List<string> GetWinners()
     {
-        return _players
+        return [.. _players
             .Where(p => p.HasEmptyHand())
-            .Select(p => p.Id)
-            .ToList();
+            .Select(p => p.Id)];
     }
 
     /// <summary>

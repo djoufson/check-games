@@ -5,8 +5,8 @@ namespace CheckGame.Api.Hubs;
 /// </summary>
 public interface IGameServer
 {
-    // Session management
-    Task JoinGameSession(string sessionId);
+    // Session management (SignalR-specific, for real-time session joining)
+    Task JoinGameSession(string sessionId, string? playerName = null);
     Task LeaveGameSession(string sessionId);
 
     // Game actions

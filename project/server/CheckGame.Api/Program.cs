@@ -1,4 +1,5 @@
 using CheckGame.Api.Endpoints.Auth;
+using CheckGame.Api.Endpoints.GameSession;
 using CheckGame.Api.Extensions;
 using CheckGame.Api.Hubs;
 
@@ -21,7 +22,8 @@ app.UseAuthorization();
 
 app
     .MapGroup("api")
-    .MapAuthEndpoints();
+    .MapAuthEndpoints()
+    .MapGameSessionEndpoints();
 
 // Map SignalR Hub
 app.MapHub<GameHub>("/gamehub");

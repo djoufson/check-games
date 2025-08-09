@@ -6,6 +6,7 @@ public class User : IdentityUser
 {
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
+    public ICollection<GameSession> GameSessions { get; private set; } = [];
 
     private User(string userName, string firstName, string lastName, string email)
     {

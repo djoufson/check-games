@@ -25,12 +25,12 @@ public class AttackChainTests
         var topCard = Models.Card.NewCard(Suit.Hearts, Rank.Queen);
 
         return new Models.GameState(
-            new List<Models.Player> { player1, player2 },
-            new List<string> { player1.Id, player2.Id },
+            [player1, player2],
+            [player1.Id, player2.Id],
             player1.Id,
             Direction.Clockwise,
             drawPile,
-            new List<Models.Card> { topCard },
+            [topCard],
             topCard,
             false,
             0,

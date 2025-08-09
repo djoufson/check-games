@@ -1,14 +1,16 @@
+using CheckGame.Api.Contracts.Requests;
 using CheckGame.Api.Events;
+using CheckGame.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace CheckGame.Api.Hubs;
 
-[Authorize]
-public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
+public class GameHub(ILogger<GameHub> logger, IGameSessionService gameSessionService) : Hub<IGameClient>, IGameServer
 {
     private readonly ILogger<GameHub> _logger = logger;
+    private readonly IGameSessionService _gameSessionService = gameSessionService;
 
     public override async Task OnConnectedAsync()
     {
@@ -27,32 +29,53 @@ public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
 
         _logger.LogInformation("User {UserName} ({UserId}) disconnected from GameHub", userName, userId);
 
-        // Leave all game sessions when disconnected
-        await LeaveAllGames();
+        // Note: In a production implementation, you would track which sessions 
+        // the user is in and automatically leave them here.
+        // For now, clients should explicitly call LeaveGameSession before disconnecting.
 
         await base.OnDisconnectedAsync(exception);
     }
 
-    // Game session management
-    public async Task JoinGameSession(string sessionId)
+    // Game session management (SignalR only - assumes user already joined via REST API)
+    public async Task JoinGameSession(string sessionId, string? playerName = null)
     {
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId))
         {
-            await Clients.Caller.Error("Invalid session or user data");
+            await Clients.Caller.Error("Invalid session ID");
             return;
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"GameSession_{sessionId}");
+        try
+        {
+            // Verify the session exists
+            var session = await _gameSessionService.GetSessionAsync(sessionId);
+            if (session == null)
+            {
+                await Clients.Caller.Error("Session not found");
+                return;
+            }
 
-        _logger.LogInformation("User {UserName} ({UserId}) joined game session {SessionId}",
-            userName, userId, sessionId);
+            // Use provided playerName or fallback to userName or generate one
+            var playerNameToUse = playerName ?? userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
 
-        // Notify other players in the session
-        var playerJoinedEvent = new PlayerJoinedEvent(userId, userName ?? "Unknown", sessionId);
-        await Clients.Group($"GameSession_{sessionId}").PlayerJoined(playerJoinedEvent);
+            // Add to SignalR group for real-time communication
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"GameSession_{sessionId}");
+
+            _logger.LogInformation("Player {PlayerName} (UserId: {UserId}) connected to SignalR for session {SessionId}",
+                playerNameToUse, userId, sessionId);
+
+            // Notify other players in the session that someone connected
+            var playerJoinedEvent = new PlayerJoinedEvent(userId ?? "anonymous", playerNameToUse, sessionId);
+            await Clients.Group($"GameSession_{sessionId}").PlayerJoined(playerJoinedEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error connecting to SignalR session {SessionId} for user {UserId}", sessionId, userId);
+            await Clients.Caller.Error("An error occurred while connecting to the session");
+        }
     }
 
     public async Task LeaveGameSession(string sessionId)
@@ -60,20 +83,32 @@ public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId))
         {
-            await Clients.Caller.Error("Invalid session or user data");
+            await Clients.Caller.Error("Invalid session ID");
             return;
         }
 
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"GameSession_{sessionId}");
+        try
+        {
+            // Use provided userName or generate fallback for the notification
+            var playerNameForNotification = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
 
-        _logger.LogInformation("User {UserName} ({UserId}) left game session {SessionId}",
-            userName, userId, sessionId);
+            // Remove from SignalR group
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"GameSession_{sessionId}");
 
-        // Notify other players in the session
-        var playerLeftEvent = new PlayerLeftEvent(userId, userName ?? "Unknown", sessionId);
-        await Clients.Group($"GameSession_{sessionId}").PlayerLeft(playerLeftEvent);
+            _logger.LogInformation("Player {PlayerName} (UserId: {UserId}) disconnected from SignalR session {SessionId}",
+                playerNameForNotification, userId, sessionId);
+
+            // Notify other players that someone disconnected from SignalR
+            var playerLeftEvent = new PlayerLeftEvent(userId ?? "anonymous", playerNameForNotification, sessionId);
+            await Clients.Group($"GameSession_{sessionId}").PlayerLeft(playerLeftEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error disconnecting from SignalR session {SessionId} for user {UserId}", sessionId, userId);
+            await Clients.Caller.Error("An error occurred while disconnecting from the session");
+        }
     }
 
     // Game actions
@@ -82,18 +117,37 @@ public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId))
         {
-            await Clients.Caller.Error("Invalid session or user data");
+            await Clients.Caller.Error("Invalid session ID");
             return;
         }
 
-        _logger.LogInformation("User {UserName} ({UserId}) played card in session {SessionId}",
-            userName, userId, sessionId);
+        try
+        {
+            // TODO: Integrate with game engine to validate card play
+            // For now, just validate that the session exists
+            var session = await _gameSessionService.GetSessionAsync(sessionId);
+            if (session == null)
+            {
+                await Clients.Caller.Error("Session not found");
+                return;
+            }
 
-        // Broadcast card play to all players in the session
-        var cardPlayedEvent = new CardPlayedEvent(userId, userName ?? "Unknown", sessionId, cardData);
-        await Clients.Group($"GameSession_{sessionId}").CardPlayed(cardPlayedEvent);
+            var playerName = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
+            
+            _logger.LogInformation("Player {PlayerName} (UserId: {UserId}) played card in session {SessionId}",
+                playerName, userId, sessionId);
+
+            // Broadcast card play to all players in the session
+            var cardPlayedEvent = new CardPlayedEvent(userId ?? "anonymous", playerName, sessionId, cardData);
+            await Clients.Group($"GameSession_{sessionId}").CardPlayed(cardPlayedEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error playing card in session {SessionId} for user {UserId}", sessionId, userId);
+            await Clients.Caller.Error("An error occurred while playing the card");
+        }
     }
 
     public async Task DrawCard(string sessionId)
@@ -101,18 +155,37 @@ public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(sessionId))
+        if (string.IsNullOrEmpty(sessionId))
         {
-            await Clients.Caller.Error("Invalid session or user data");
+            await Clients.Caller.Error("Invalid session ID");
             return;
         }
 
-        _logger.LogInformation("User {UserName} ({UserId}) drew card in session {SessionId}",
-            userName, userId, sessionId);
+        try
+        {
+            // TODO: Integrate with game engine to handle card drawing
+            // For now, just validate that the session exists
+            var session = await _gameSessionService.GetSessionAsync(sessionId);
+            if (session == null)
+            {
+                await Clients.Caller.Error("Session not found");
+                return;
+            }
 
-        // Broadcast card draw to all players in the session (default to 1 card drawn)
-        var cardDrawnEvent = new CardDrawnEvent(userId, userName ?? "Unknown", sessionId, CardCount: 1);
-        await Clients.Group($"GameSession_{sessionId}").CardDrawn(cardDrawnEvent);
+            var playerName = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
+            
+            _logger.LogInformation("Player {PlayerName} (UserId: {UserId}) drew card in session {SessionId}",
+                playerName, userId, sessionId);
+
+            // Broadcast card draw to all players in the session (default to 1 card drawn)
+            var cardDrawnEvent = new CardDrawnEvent(userId ?? "anonymous", playerName, sessionId, CardCount: 1);
+            await Clients.Group($"GameSession_{sessionId}").CardDrawn(cardDrawnEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error drawing card in session {SessionId} for user {UserId}", sessionId, userId);
+            await Clients.Caller.Error("An error occurred while drawing the card");
+        }
     }
 
     public async Task SendGameMessage(string sessionId, string message)
@@ -120,15 +193,33 @@ public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
         var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value;
 
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(message))
+        if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(message))
         {
             await Clients.Caller.Error("Invalid message data");
             return;
         }
 
-        // Broadcast message to all players in the session
-        var gameMessageEvent = new GameMessageEvent(userId, userName ?? "Unknown", sessionId, message);
-        await Clients.Group($"GameSession_{sessionId}").GameMessage(gameMessageEvent);
+        try
+        {
+            // Validate that the session exists
+            var session = await _gameSessionService.GetSessionAsync(sessionId);
+            if (session == null)
+            {
+                await Clients.Caller.Error("Session not found");
+                return;
+            }
+
+            var playerName = userName ?? $"Player_{Guid.NewGuid().ToString()[..8]}";
+            
+            // Broadcast message to all players in the session
+            var gameMessageEvent = new GameMessageEvent(userId ?? "anonymous", playerName, sessionId, message);
+            await Clients.Group($"GameSession_{sessionId}").GameMessage(gameMessageEvent);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending message in session {SessionId} for user {UserId}", sessionId, userId);
+            await Clients.Caller.Error("An error occurred while sending the message");
+        }
     }
 
     // Additional game methods from IGameServer interface
@@ -168,11 +259,4 @@ public class GameHub(ILogger<GameHub> logger) : Hub<IGameClient>, IGameServer
         await Clients.Caller.GameStateUpdated(gameStateUpdateEvent);
     }
 
-    // Helper method to leave all games when disconnecting
-    private async Task LeaveAllGames()
-    {
-        // In a real implementation, you would track which sessions the user is in
-        // and remove them from those groups. For now, this is a placeholder.
-        await Task.CompletedTask;
-    }
 }
