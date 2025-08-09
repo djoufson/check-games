@@ -48,7 +48,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         // Navigate based on authentication status
-        if (authProvider.isAuthenticated) {
+        if (authProvider.isAuthenticated || authProvider.isAnonymous) {
           return const HomeScreen();
         } else {
           return const LoginScreen();

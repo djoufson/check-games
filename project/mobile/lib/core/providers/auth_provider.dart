@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,7 @@ import '../api/services/auth_service.dart';
 enum AuthStatus {
   initial,
   authenticated,
+  anonymous,
   unauthenticated,
   loading,
 }
@@ -18,6 +20,7 @@ class AuthProvider with ChangeNotifier {
   UserProfile? _user;
   JwtResponse? _tokens;
   String? _error;
+  Timer? _tokenRefreshTimer;
 
   AuthProvider({AuthService? authService}) 
     : _authService = authService ?? AuthService() {
@@ -30,7 +33,12 @@ class AuthProvider with ChangeNotifier {
   String? get error => _error;
   String? get accessToken => _tokens?.accessToken;
   bool get isAuthenticated => _status == AuthStatus.authenticated && _user != null;
+  bool get isAnonymous => _status == AuthStatus.anonymous;
+  bool get isGuest => _status == AuthStatus.anonymous;
   bool get isLoading => _status == AuthStatus.loading;
+  bool get canCreateGames => isAuthenticated;
+  bool get canJoinGames => isAuthenticated || isAnonymous;
+  bool get canAccessSettings => true;
 
   /// Check if user authentication is stored locally
   Future<void> _checkStoredAuth() async {
@@ -38,18 +46,22 @@ class AuthProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final tokensJson = prefs.getString('auth_tokens');
       final userJson = prefs.getString('user_profile');
+      final isAnonymous = prefs.getBool('is_anonymous') ?? false;
 
       if (tokensJson != null && userJson != null) {
         _tokens = JwtResponse.fromJson(jsonDecode(tokensJson));
         _user = UserProfile.fromJson(jsonDecode(userJson));
 
         // Check if token is still valid
-        if (_tokens!.expiresAt.isAfter(DateTime.now())) {
+        if (_tokens!.expiresAt.isAfter(DateTime.now().add(const Duration(minutes: 5)))) {
           _status = AuthStatus.authenticated;
+          _scheduleTokenRefresh();
         } else {
           // Try to refresh token
           await _refreshToken();
         }
+      } else if (isAnonymous) {
+        _status = AuthStatus.anonymous;
       } else {
         _status = AuthStatus.unauthenticated;
       }
@@ -73,6 +85,7 @@ class AuthProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_tokens');
     await prefs.remove('user_profile');
+    await prefs.remove('is_anonymous');
   }
 
   /// Register a new user
@@ -123,6 +136,7 @@ class AuthProvider with ChangeNotifier {
 
       await _storeAuth(_tokens!, _user!);
       _status = AuthStatus.authenticated;
+      _scheduleTokenRefresh();
       notifyListeners();
       return true;
     } else {
@@ -148,6 +162,7 @@ class AuthProvider with ChangeNotifier {
         await _storeAuth(_tokens!, _user!);
       }
       _status = AuthStatus.authenticated;
+      _scheduleTokenRefresh();
     } else {
       await logout();
     }
@@ -155,8 +170,41 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Schedule automatic token refresh
+  void _scheduleTokenRefresh() {
+    _tokenRefreshTimer?.cancel();
+    
+    if (_tokens != null) {
+      final now = DateTime.now();
+      final expiresAt = _tokens!.expiresAt;
+      final refreshTime = expiresAt.subtract(const Duration(minutes: 5));
+      
+      if (refreshTime.isAfter(now)) {
+        final duration = refreshTime.difference(now);
+        _tokenRefreshTimer = Timer(duration, () {
+          _refreshToken();
+        });
+      }
+    }
+  }
+
+  /// Continue as guest (anonymous user)
+  Future<void> continueAsGuest() async {
+    _status = AuthStatus.anonymous;
+    _user = null;
+    _tokens = null;
+    _error = null;
+    
+    // Store anonymous status
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_anonymous', true);
+    
+    notifyListeners();
+  }
+
   /// Logout the user
   Future<void> logout() async {
+    _tokenRefreshTimer?.cancel();
     _status = AuthStatus.unauthenticated;
     _user = null;
     _tokens = null;
@@ -188,6 +236,7 @@ class AuthProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    _tokenRefreshTimer?.cancel();
     _authService.dispose();
     super.dispose();
   }

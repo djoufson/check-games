@@ -245,6 +245,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 32),
 
+              // Continue as Guest Button
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, child) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      onPressed: authProvider.isLoading ? null : () async {
+                        await authProvider.continueAsGuest();
+                        if (context.mounted) {
+                          Navigator.of(context).pushReplacementNamed('/home');
+                        }
+                      },
+                      child: Text(
+                        'Continue as Guest',
+                        style: AppTypography.buttonText.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
               // Divider
               Row(
                 children: [
@@ -272,7 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
               // Register Link
               Row(
