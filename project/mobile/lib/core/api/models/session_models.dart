@@ -38,8 +38,7 @@ class GameSession {
     );
   }
 
-  static List<String> parsePlayers(List<dynamic> data)
-  {
+  static List<String> parsePlayers(List<dynamic> data) {
     List<String> result = [];
     for (var element in data) {
       result.add(element as String);

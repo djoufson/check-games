@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace CheckGame.Api.Hubs;
 
 public class GameHub(
-    ILogger<GameHub> logger, 
+    ILogger<GameHub> logger,
     IGameSessionService gameSessionService,
     IConnectionCacheService connectionCacheService) : Hub<IGameClient>, IGameServer
 {
@@ -25,7 +25,7 @@ public class GameHub(
         if (!string.IsNullOrEmpty(userId))
         {
             await _connectionCacheService.AddUserConnectionAsync(userId, Context.ConnectionId);
-            _logger.LogInformation("Authenticated user {UserName} ({UserId}) connected to GameHub with connection {ConnectionId}", 
+            _logger.LogInformation("Authenticated user {UserName} ({UserId}) connected to GameHub with connection {ConnectionId}",
                 userName, userId, Context.ConnectionId);
         }
         else
@@ -45,7 +45,7 @@ public class GameHub(
         if (!string.IsNullOrEmpty(userId))
         {
             await _connectionCacheService.RemoveConnectionAsync(userId, Context.ConnectionId);
-            _logger.LogInformation("Authenticated user {UserName} ({UserId}) disconnected from GameHub, connection {ConnectionId} removed", 
+            _logger.LogInformation("Authenticated user {UserName} ({UserId}) disconnected from GameHub, connection {ConnectionId} removed",
                 userName, userId, Context.ConnectionId);
         }
         else

@@ -45,11 +45,10 @@ class AuthWrapper extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         // Show loading screen while checking auth status
-        if (authProvider.status == AuthStatus.initial || authProvider.isLoading) {
+        if (authProvider.status == AuthStatus.initial ||
+            authProvider.isLoading) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -63,4 +62,3 @@ class AuthWrapper extends StatelessWidget {
     );
   }
 }
-

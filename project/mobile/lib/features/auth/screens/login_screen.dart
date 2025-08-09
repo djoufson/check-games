@@ -252,12 +252,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: OutlinedButton(
-                      onPressed: authProvider.isLoading ? null : () async {
-                        await authProvider.continueAsGuest();
-                        if (context.mounted) {
-                          Navigator.of(context).pushReplacementNamed('/home');
-                        }
-                      },
+                      onPressed: authProvider.isLoading
+                          ? null
+                          : () async {
+                              await authProvider.continueAsGuest();
+                              if (context.mounted) {
+                                Navigator.of(
+                                  context,
+                                ).pushReplacementNamed('/home');
+                              }
+                            },
                       child: Text(
                         'Continue as Guest',
                         style: AppTypography.buttonText.copyWith(

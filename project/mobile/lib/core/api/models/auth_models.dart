@@ -30,16 +30,10 @@ class LoginRequest {
   final String email;
   final String password;
 
-  const LoginRequest({
-    required this.email,
-    required this.password,
-  });
+  const LoginRequest({required this.email, required this.password});
 
   Map<String, dynamic> toJson() {
-    return {
-      'email': email,
-      'password': password,
-    };
+    return {'email': email, 'password': password};
   }
 }
 
@@ -126,23 +120,16 @@ class ApiResponse<T> {
   });
 
   factory ApiResponse.success(T data) {
-    return ApiResponse(
-      success: true,
-      data: data,
-    );
+    return ApiResponse(success: true, data: data);
   }
 
   factory ApiResponse.error(String error) {
-    return ApiResponse(
-      success: false,
-      error: error,
-    );
+    return ApiResponse(success: false, error: error);
   }
 
-  factory ApiResponse.validationError(Map<String, List<String>> validationErrors) {
-    return ApiResponse(
-      success: false,
-      validationErrors: validationErrors,
-    );
+  factory ApiResponse.validationError(
+    Map<String, List<String>> validationErrors,
+  ) {
+    return ApiResponse(success: false, validationErrors: validationErrors);
   }
 }

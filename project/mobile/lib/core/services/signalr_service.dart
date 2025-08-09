@@ -25,21 +25,23 @@ class SignalRService {
   static const Duration reconnectDelay = Duration(seconds: 5);
 
   // Stream controllers for connection status and events
-  final StreamController<SignalRConnectionStatus> _statusController = 
+  final StreamController<SignalRConnectionStatus> _statusController =
       StreamController<SignalRConnectionStatus>.broadcast();
-  final StreamController<Map<String, dynamic>> _gameEventController = 
+  final StreamController<Map<String, dynamic>> _gameEventController =
       StreamController<Map<String, dynamic>>.broadcast();
 
   // Getters
   SignalRConnectionStatus get status => _status;
   Stream<SignalRConnectionStatus> get statusStream => _statusController.stream;
-  Stream<Map<String, dynamic>> get gameEventStream => _gameEventController.stream;
+  Stream<Map<String, dynamic>> get gameEventStream =>
+      _gameEventController.stream;
   bool get isConnected => _status == SignalRConnectionStatus.connected;
   HubConnection? get connection => _connection;
 
   /// Initialize SignalR connection
   Future<void> initialize({String? accessToken}) async {
-    if (_connection != null && _status != SignalRConnectionStatus.disconnected) {
+    if (_connection != null &&
+        _status != SignalRConnectionStatus.disconnected) {
       return; // Already initialized
     }
 
@@ -53,13 +55,16 @@ class SignalRService {
       const String hubUrl = ApiConfig.signalRHubUrl;
 
       final connectionBuilder = HubConnectionBuilder();
-      
-      // Configure URL with access token in headers if available  
+
+      // Configure URL with access token in headers if available
       if (_accessToken != null && _accessToken!.isNotEmpty) {
         _connection = connectionBuilder
-            .withUrl(hubUrl, options: HttpConnectionOptions(
-              accessTokenFactory: () => Future.value(_accessToken),
-            ))
+            .withUrl(
+              hubUrl,
+              options: HttpConnectionOptions(
+                accessTokenFactory: () => Future.value(_accessToken),
+              ),
+            )
             .withAutomaticReconnect()
             .build();
       } else {
@@ -103,43 +108,28 @@ class SignalRService {
 
     _connection!.on('PlayerLeft', (message) {
       debugPrint('SignalR: PlayerLeft received: $message');
-      _gameEventController.add({
-        'type': 'PlayerLeft',
-        'data': message?.first,
-      });
+      _gameEventController.add({'type': 'PlayerLeft', 'data': message?.first});
     });
 
     // Game events
     _connection!.on('CardPlayed', (message) {
       debugPrint('SignalR: CardPlayed received: $message');
-      _gameEventController.add({
-        'type': 'CardPlayed',
-        'data': message?.first,
-      });
+      _gameEventController.add({'type': 'CardPlayed', 'data': message?.first});
     });
 
     _connection!.on('CardDrawn', (message) {
       debugPrint('SignalR: CardDrawn received: $message');
-      _gameEventController.add({
-        'type': 'CardDrawn',
-        'data': message?.first,
-      });
+      _gameEventController.add({'type': 'CardDrawn', 'data': message?.first});
     });
 
     _connection!.on('GameMessage', (message) {
       debugPrint('SignalR: GameMessage received: $message');
-      _gameEventController.add({
-        'type': 'GameMessage',
-        'data': message?.first,
-      });
+      _gameEventController.add({'type': 'GameMessage', 'data': message?.first});
     });
 
     _connection!.on('SuitChanged', (message) {
       debugPrint('SignalR: SuitChanged received: $message');
-      _gameEventController.add({
-        'type': 'SuitChanged',
-        'data': message?.first,
-      });
+      _gameEventController.add({'type': 'SuitChanged', 'data': message?.first});
     });
 
     _connection!.on('GameStateUpdated', (message) {
@@ -153,10 +143,7 @@ class SignalRService {
     // Error handling
     _connection!.on('Error', (message) {
       debugPrint('SignalR: Error received: $message');
-      _gameEventController.add({
-        'type': 'Error',
-        'data': message?.first,
-      });
+      _gameEventController.add({'type': 'Error', 'data': message?.first});
     });
   }
 
@@ -188,7 +175,9 @@ class SignalRService {
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(reconnectDelay, () async {
       _reconnectAttempts++;
-      debugPrint('SignalR: Reconnect attempt $_reconnectAttempts/$maxReconnectAttempts');
+      debugPrint(
+        'SignalR: Reconnect attempt $_reconnectAttempts/$maxReconnectAttempts',
+      );
       await _connect();
     });
   }
@@ -204,7 +193,7 @@ class SignalRService {
   /// Update authentication token and reconnect if needed
   Future<void> updateAccessToken(String? token) async {
     _accessToken = token;
-    
+
     // If we're connected, we need to reconnect with the new token
     if (isConnected) {
       await disconnect();
@@ -323,7 +312,7 @@ class SignalRService {
 
   /// Manually reconnect
   Future<void> reconnect() async {
-    if (_status == SignalRConnectionStatus.connecting || 
+    if (_status == SignalRConnectionStatus.connecting ||
         _status == SignalRConnectionStatus.reconnecting) {
       return; // Already trying to connect
     }
@@ -336,7 +325,7 @@ class SignalRService {
   /// Disconnect from SignalR hub
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
-    
+
     if (_connection != null) {
       try {
         await _connection!.stop();
@@ -346,7 +335,7 @@ class SignalRService {
       }
       _connection = null;
     }
-    
+
     _updateStatus(SignalRConnectionStatus.disconnected);
   }
 

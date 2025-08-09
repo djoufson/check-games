@@ -104,7 +104,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Passwords do not match', style: AppTypography.bodyMedium),
+          content: Text(
+            'Passwords do not match',
+            style: AppTypography.bodyMedium,
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -188,7 +191,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: AuthTextField(
                             controller: _firstNameController,
                             label: 'First Name',
-                            validator: (value) => _validateName(value, 'First name'),
+                            validator: (value) =>
+                                _validateName(value, 'First name'),
                             keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
                           ),
@@ -198,7 +202,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: AuthTextField(
                             controller: _lastNameController,
                             label: 'Last Name',
-                            validator: (value) => _validateName(value, 'Last name'),
+                            validator: (value) =>
+                                _validateName(value, 'Last name'),
                             keyboardType: TextInputType.name,
                             textInputAction: TextInputAction.next,
                           ),
@@ -222,7 +227,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       textInputAction: TextInputAction.next,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: AppColors.mediumGrey,
                         ),
                         onPressed: () {
@@ -250,7 +257,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onSubmitted: (_) => _handleRegister(),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                          _obscureConfirmPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: AppColors.mediumGrey,
                         ),
                         onPressed: () {
@@ -267,14 +276,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: authProvider.isLoading ? null : _handleRegister,
+                            onPressed: authProvider.isLoading
+                                ? null
+                                : _handleRegister,
                             child: authProvider.isLoading
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.white,
+                                      ),
                                     ),
                                   )
                                 : Text(

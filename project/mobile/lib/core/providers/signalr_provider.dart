@@ -4,13 +4,14 @@ import '../services/signalr_service.dart';
 
 class SignalRProvider with ChangeNotifier {
   final SignalRService _signalRService = SignalRService();
-  
-  SignalRConnectionStatus _connectionStatus = SignalRConnectionStatus.disconnected;
+
+  SignalRConnectionStatus _connectionStatus =
+      SignalRConnectionStatus.disconnected;
   Map<String, dynamic>? _lastGameEvent;
   StreamSubscription<SignalRConnectionStatus>? _statusSubscription;
   StreamSubscription<Map<String, dynamic>>? _eventSubscription;
   String? _currentSessionId;
-  
+
   SignalRProvider() {
     _initializeListeners();
   }
@@ -19,10 +20,14 @@ class SignalRProvider with ChangeNotifier {
   SignalRConnectionStatus get connectionStatus => _connectionStatus;
   Map<String, dynamic>? get lastGameEvent => _lastGameEvent;
   String? get currentSessionId => _currentSessionId;
-  bool get isConnected => _connectionStatus == SignalRConnectionStatus.connected;
-  bool get isConnecting => _connectionStatus == SignalRConnectionStatus.connecting;
-  bool get isReconnecting => _connectionStatus == SignalRConnectionStatus.reconnecting;
-  bool get isDisconnected => _connectionStatus == SignalRConnectionStatus.disconnected;
+  bool get isConnected =>
+      _connectionStatus == SignalRConnectionStatus.connected;
+  bool get isConnecting =>
+      _connectionStatus == SignalRConnectionStatus.connecting;
+  bool get isReconnecting =>
+      _connectionStatus == SignalRConnectionStatus.reconnecting;
+  bool get isDisconnected =>
+      _connectionStatus == SignalRConnectionStatus.disconnected;
   bool get hasFailed => _connectionStatus == SignalRConnectionStatus.failed;
 
   /// Get connection status as a user-friendly string
@@ -58,21 +63,17 @@ class SignalRProvider with ChangeNotifier {
 
   /// Initialize event listeners
   void _initializeListeners() {
-    _statusSubscription = _signalRService.statusStream.listen(
-      (status) {
-        _connectionStatus = status;
-        notifyListeners();
-        debugPrint('SignalR Provider: Status changed to $status');
-      },
-    );
+    _statusSubscription = _signalRService.statusStream.listen((status) {
+      _connectionStatus = status;
+      notifyListeners();
+      debugPrint('SignalR Provider: Status changed to $status');
+    });
 
-    _eventSubscription = _signalRService.gameEventStream.listen(
-      (event) {
-        _lastGameEvent = event;
-        notifyListeners();
-        debugPrint('SignalR Provider: Game event received: ${event['type']}');
-      },
-    );
+    _eventSubscription = _signalRService.gameEventStream.listen((event) {
+      _lastGameEvent = event;
+      notifyListeners();
+      debugPrint('SignalR Provider: Game event received: ${event['type']}');
+    });
   }
 
   /// Initialize SignalR connection
@@ -107,7 +108,7 @@ class SignalRProvider with ChangeNotifier {
   /// Leave the current game session
   Future<void> leaveCurrentSession() async {
     if (_currentSessionId == null) return;
-    
+
     try {
       await _signalRService.leaveGameSession(_currentSessionId!);
       _currentSessionId = null;
@@ -123,7 +124,7 @@ class SignalRProvider with ChangeNotifier {
       debugPrint('SignalR Provider: Cannot play card - no current session');
       return;
     }
-    
+
     try {
       await _signalRService.playCard(_currentSessionId!, cardData);
     } catch (e) {
@@ -137,7 +138,7 @@ class SignalRProvider with ChangeNotifier {
       debugPrint('SignalR Provider: Cannot draw card - no current session');
       return;
     }
-    
+
     try {
       await _signalRService.drawCard(_currentSessionId!);
     } catch (e) {
@@ -151,7 +152,7 @@ class SignalRProvider with ChangeNotifier {
       debugPrint('SignalR Provider: Cannot send message - no current session');
       return;
     }
-    
+
     try {
       await _signalRService.sendGameMessage(_currentSessionId!, message);
     } catch (e) {
@@ -165,7 +166,7 @@ class SignalRProvider with ChangeNotifier {
       debugPrint('SignalR Provider: Cannot change suit - no current session');
       return;
     }
-    
+
     try {
       await _signalRService.changeSuit(_currentSessionId!, newSuit);
     } catch (e) {
@@ -176,10 +177,12 @@ class SignalRProvider with ChangeNotifier {
   /// Request current game state
   Future<void> requestGameState() async {
     if (_currentSessionId == null) {
-      debugPrint('SignalR Provider: Cannot request game state - no current session');
+      debugPrint(
+        'SignalR Provider: Cannot request game state - no current session',
+      );
       return;
     }
-    
+
     try {
       await _signalRService.requestGameState(_currentSessionId!);
     } catch (e) {
@@ -204,8 +207,9 @@ class SignalRProvider with ChangeNotifier {
 
   /// Listen to specific game event types
   Stream<Map<String, dynamic>> listenToEventType(String eventType) {
-    return _signalRService.gameEventStream
-        .where((event) => event['type'] == eventType);
+    return _signalRService.gameEventStream.where(
+      (event) => event['type'] == eventType,
+    );
   }
 
   /// Get events for the current session only

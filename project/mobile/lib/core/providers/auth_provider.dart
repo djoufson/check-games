@@ -6,25 +6,19 @@ import '../api/models/auth_models.dart';
 import '../api/services/auth_service.dart';
 import '../services/signalr_service.dart';
 
-enum AuthStatus {
-  initial,
-  authenticated,
-  anonymous,
-  unauthenticated,
-  loading,
-}
+enum AuthStatus { initial, authenticated, anonymous, unauthenticated, loading }
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
   final SignalRService _signalRService = SignalRService();
-  
+
   AuthStatus _status = AuthStatus.initial;
   UserProfile? _user;
   JwtResponse? _tokens;
   String? _error;
   Timer? _tokenRefreshTimer;
 
-  AuthProvider({AuthService? authService}) 
+  AuthProvider({AuthService? authService})
     : _authService = authService ?? AuthService() {
     _checkStoredAuth();
   }
@@ -34,7 +28,8 @@ class AuthProvider with ChangeNotifier {
   UserProfile? get user => _user;
   String? get error => _error;
   String? get accessToken => _tokens?.accessToken;
-  bool get isAuthenticated => _status == AuthStatus.authenticated && _user != null;
+  bool get isAuthenticated =>
+      _status == AuthStatus.authenticated && _user != null;
   bool get isAnonymous => _status == AuthStatus.anonymous;
   bool get isGuest => _status == AuthStatus.anonymous;
   bool get isLoading => _status == AuthStatus.loading;
@@ -55,7 +50,9 @@ class AuthProvider with ChangeNotifier {
         _user = UserProfile.fromJson(jsonDecode(userJson));
 
         // Check if token is still valid
-        if (_tokens!.expiresAt.isAfter(DateTime.now().add(const Duration(minutes: 5)))) {
+        if (_tokens!.expiresAt.isAfter(
+          DateTime.now().add(const Duration(minutes: 5)),
+        )) {
           _status = AuthStatus.authenticated;
           _scheduleTokenRefresh();
           await _initializeSignalR();
@@ -73,7 +70,7 @@ class AuthProvider with ChangeNotifier {
       _status = AuthStatus.unauthenticated;
       await _clearStoredAuth();
     }
-    
+
     notifyListeners();
   }
 
@@ -106,12 +103,13 @@ class AuthProvider with ChangeNotifier {
         email: request.email,
         password: request.password,
       );
-      
+
       final loginResult = await login(loginRequest);
       return loginResult;
     } else {
       _status = AuthStatus.unauthenticated;
-      _error = response.error ?? _formatValidationErrors(response.validationErrors);
+      _error =
+          response.error ?? _formatValidationErrors(response.validationErrors);
       notifyListeners();
       return false;
     }
@@ -127,7 +125,7 @@ class AuthProvider with ChangeNotifier {
 
     if (response.success && response.data != null) {
       _tokens = response.data!;
-      
+
       // Extract user info from JWT token (simplified - in production you might want a separate endpoint)
       // For now, we'll create a basic user profile from the email
       _user = UserProfile(
@@ -146,7 +144,8 @@ class AuthProvider with ChangeNotifier {
       return true;
     } else {
       _status = AuthStatus.unauthenticated;
-      _error = response.error ?? _formatValidationErrors(response.validationErrors);
+      _error =
+          response.error ?? _formatValidationErrors(response.validationErrors);
       notifyListeners();
       return false;
     }
@@ -172,19 +171,19 @@ class AuthProvider with ChangeNotifier {
     } else {
       await logout();
     }
-    
+
     notifyListeners();
   }
 
   /// Schedule automatic token refresh
   void _scheduleTokenRefresh() {
     _tokenRefreshTimer?.cancel();
-    
+
     if (_tokens != null) {
       final now = DateTime.now();
       final expiresAt = _tokens!.expiresAt;
       final refreshTime = expiresAt.subtract(const Duration(minutes: 5));
-      
+
       if (refreshTime.isAfter(now)) {
         final duration = refreshTime.difference(now);
         _tokenRefreshTimer = Timer(duration, () {
@@ -200,14 +199,14 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     _tokens = null;
     _error = null;
-    
+
     // Store anonymous status
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_anonymous', true);
-    
+
     // Initialize SignalR for anonymous user
     await _initializeSignalR();
-    
+
     notifyListeners();
   }
 
@@ -219,7 +218,7 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     _tokens = null;
     _error = null;
-    
+
     await _clearStoredAuth();
     notifyListeners();
   }

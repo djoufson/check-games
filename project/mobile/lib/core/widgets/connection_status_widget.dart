@@ -89,14 +89,16 @@ class ConnectionStatusWidget extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: signalRProvider.connectionStatusColor.withValues(alpha: 0.3),
+                  color: signalRProvider.connectionStatusColor.withValues(
+                    alpha: 0.3,
+                  ),
                   blurRadius: 4,
                   spreadRadius: 1,
                 ),
               ],
             ),
           ),
-          
+
           if (showText) ...[
             const SizedBox(width: 8),
             Text(
@@ -116,17 +118,14 @@ class ConnectionStatusWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               child: Padding(
                 padding: const EdgeInsets.all(4),
-                child: Icon(
-                  Icons.refresh,
-                  size: 16,
-                  color: AppColors.primary,
-                ),
+                child: Icon(Icons.refresh, size: 16, color: AppColors.primary),
               ),
             ),
           ],
 
           // Loading indicator for connecting states
-          if (signalRProvider.isConnecting || signalRProvider.isReconnecting) ...[
+          if (signalRProvider.isConnecting ||
+              signalRProvider.isReconnecting) ...[
             const SizedBox(width: 8),
             SizedBox(
               width: 12,
@@ -161,12 +160,12 @@ class ConnectionStatusBanner extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: signalRProvider.hasFailed 
+            color: signalRProvider.hasFailed
                 ? AppColors.error.withValues(alpha: 0.1)
                 : AppColors.secondary.withValues(alpha: 0.1),
             border: Border(
               bottom: BorderSide(
-                color: signalRProvider.hasFailed 
+                color: signalRProvider.hasFailed
                     ? AppColors.error.withValues(alpha: 0.3)
                     : AppColors.secondary.withValues(alpha: 0.3),
                 width: 1,
@@ -176,8 +175,8 @@ class ConnectionStatusBanner extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                signalRProvider.hasFailed 
-                    ? Icons.wifi_off 
+                signalRProvider.hasFailed
+                    ? Icons.wifi_off
                     : Icons.wifi_tethering,
                 size: 16,
                 color: signalRProvider.connectionStatusColor,

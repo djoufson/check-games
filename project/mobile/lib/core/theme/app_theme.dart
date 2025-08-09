@@ -13,16 +13,16 @@ class AppTheme {
       // Base configuration
       useMaterial3: true,
       brightness: Brightness.light,
-      
+
       // Color scheme based on brand colors
       colorScheme: _lightColorScheme,
-      
+
       // Typography system
       textTheme: _textTheme,
-      
+
       // Primary text theme (for app bars, etc.)
       primaryTextTheme: _textTheme,
-      
+
       // App bar theme
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primary,
@@ -34,7 +34,7 @@ class AppTheme {
         ),
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
-      
+
       // Elevated button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -49,12 +49,14 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
-      
+
       // Outlined button theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: AppTypography.buttonText.copyWith(color: AppColors.primary),
+          textStyle: AppTypography.buttonText.copyWith(
+            color: AppColors.primary,
+          ),
           side: const BorderSide(color: AppColors.primary, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -62,35 +64,36 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
-      
+
       // Text button theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: AppTypography.buttonText.copyWith(color: AppColors.primary),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+          textStyle: AppTypography.buttonText.copyWith(
+            color: AppColors.primary,
           ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
-      
+
       // Card theme
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 4,
         shadowColor: AppColors.darkGrey.withValues(alpha: 0.2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.all(8),
       ),
-      
+
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.lightGrey, width: 1),
@@ -112,20 +115,20 @@ class AppTheme {
           borderSide: BorderSide(color: AppColors.error, width: 2),
         ),
         labelStyle: AppTypography.labelLarge,
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.lightGrey),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.lightGrey,
+        ),
         errorStyle: AppTypography.errorText,
       ),
-      
+
       // Floating action button theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
         elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      
+
       // Bottom navigation bar theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.white,
@@ -138,7 +141,7 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
-      
+
       // Chip theme
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surface,
@@ -148,22 +151,18 @@ class AppTheme {
         secondaryLabelStyle: AppTypography.labelMedium.copyWith(
           color: AppColors.white,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      
+
       // Dialog theme
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.white,
         elevation: 12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: AppTypography.headlineMedium,
         contentTextStyle: AppTypography.bodyLarge,
       ),
-      
+
       // Bottom sheet theme
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.white,
@@ -172,14 +171,14 @@ class AppTheme {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
-      
+
       // Divider theme
       dividerTheme: DividerThemeData(
         color: AppColors.lightGrey.withValues(alpha: 0.5),
         thickness: 1,
         space: 1,
       ),
-      
+
       // Scaffold background color
       scaffoldBackgroundColor: AppColors.white,
     );
@@ -217,22 +216,22 @@ class AppTheme {
       displayLarge: AppTypography.displayLarge,
       displayMedium: AppTypography.displayMedium,
       displaySmall: AppTypography.displaySmall,
-      
+
       // Headline styles
       headlineLarge: AppTypography.headlineLarge,
       headlineMedium: AppTypography.headlineMedium,
       headlineSmall: AppTypography.headlineSmall,
-      
+
       // Title styles
       titleLarge: AppTypography.titleLarge,
       titleMedium: AppTypography.titleMedium,
       titleSmall: AppTypography.titleSmall,
-      
+
       // Body styles
       bodyLarge: AppTypography.bodyLarge,
       bodyMedium: AppTypography.bodyMedium,
       bodySmall: AppTypography.bodySmall,
-      
+
       // Label styles
       labelLarge: AppTypography.labelLarge,
       labelMedium: AppTypography.labelMedium,

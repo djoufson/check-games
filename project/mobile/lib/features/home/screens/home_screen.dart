@@ -193,10 +193,8 @@ class HomeScreen extends StatelessWidget {
                                   icon: Icons.add_circle,
                                   color: AppColors.primary,
                                   enabled: authProvider.canCreateGames,
-                                  onTap: () => _handleCreateGame(
-                                    context, 
-                                    authProvider,
-                                  ),
+                                  onTap: () =>
+                                      _handleCreateGame(context, authProvider),
                                 ),
                                 _buildActionCard(
                                   context,
@@ -420,7 +418,7 @@ class HomeScreen extends StatelessWidget {
     required int maxPlayers,
   }) async {
     final sessionProvider = context.read<SessionProvider>();
-    
+
     // Update session provider with current access token
     sessionProvider.updateAccessToken(authProvider.accessToken);
 
@@ -435,10 +433,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
-              Text(
-                'Creating session...',
-                style: AppTypography.bodyMedium,
-              ),
+              Text('Creating session...', style: AppTypography.bodyMedium),
             ],
           ),
         );
@@ -481,7 +476,7 @@ class HomeScreen extends StatelessWidget {
       if (context.mounted) {
         // Close loading dialog
         Navigator.of(context).pop();
-        
+
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

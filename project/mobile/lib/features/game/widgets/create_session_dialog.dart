@@ -40,10 +40,9 @@ class _CreateSessionDialogState extends State<CreateSessionDialog> {
     }
 
     final sessionName = _sessionNameController.text.trim();
-    Navigator.of(context).pop({
-      'sessionName': sessionName,
-      'maxPlayers': _maxPlayers,
-    });
+    Navigator.of(
+      context,
+    ).pop({'sessionName': sessionName, 'maxPlayers': _maxPlayers});
   }
 
   @override
@@ -101,12 +100,16 @@ class _CreateSessionDialogState extends State<CreateSessionDialog> {
                 child: DropdownButton<int>(
                   value: _maxPlayers,
                   isExpanded: true,
-                  onChanged: _isLoading ? null : (int? newValue) {
-                    setState(() {
-                      _maxPlayers = newValue ?? 4;
-                    });
-                  },
-                  items: [2, 3, 4, 5, 6, 8].map<DropdownMenuItem<int>>((int value) {
+                  onChanged: _isLoading
+                      ? null
+                      : (int? newValue) {
+                          setState(() {
+                            _maxPlayers = newValue ?? 4;
+                          });
+                        },
+                  items: [2, 3, 4, 5, 6, 8].map<DropdownMenuItem<int>>((
+                    int value,
+                  ) {
                     return DropdownMenuItem<int>(
                       value: value,
                       child: Text(
@@ -155,9 +158,11 @@ class _CreateSessionDialogState extends State<CreateSessionDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _isLoading ? null : () {
-            Navigator.of(context).pop();
-          },
+          onPressed: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
           child: const Text('Cancel'),
         ),
         ElevatedButton(

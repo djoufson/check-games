@@ -5,7 +5,7 @@ import '../models/auth_models.dart';
 class AuthService {
   // TODO: Update with actual API base URL - using localhost for development
   static const String _baseUrl = 'http://localhost:5277/api/auth';
-  
+
   final http.Client _client;
 
   AuthService({http.Client? client}) : _client = client ?? http.Client();
@@ -15,9 +15,7 @@ class AuthService {
     try {
       final response = await _client.post(
         Uri.parse('$_baseUrl/register'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.toJson()),
       );
 
@@ -31,19 +29,21 @@ class AuthService {
         // Handle validation errors
         try {
           final errorData = jsonDecode(response.body);
-          if (errorData is Map<String, dynamic> && errorData.containsKey('errors')) {
+          if (errorData is Map<String, dynamic> &&
+              errorData.containsKey('errors')) {
             final errors = Map<String, List<String>>.from(
-              errorData['errors'].map((key, value) => MapEntry(
-                key,
-                List<String>.from(value),
-              )),
+              errorData['errors'].map(
+                (key, value) => MapEntry(key, List<String>.from(value)),
+              ),
             );
             return ApiResponse.validationError(errors);
           }
         } catch (_) {
           // Fall through to generic error
         }
-        return ApiResponse.error('Registration failed. Please check your input.');
+        return ApiResponse.error(
+          'Registration failed. Please check your input.',
+        );
       } else {
         return ApiResponse.error('Registration failed. Please try again.');
       }
@@ -57,9 +57,7 @@ class AuthService {
     try {
       final response = await _client.post(
         Uri.parse('$_baseUrl/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(request.toJson()),
       );
 
@@ -73,12 +71,12 @@ class AuthService {
         // Handle validation errors
         try {
           final errorData = jsonDecode(response.body);
-          if (errorData is Map<String, dynamic> && errorData.containsKey('errors')) {
+          if (errorData is Map<String, dynamic> &&
+              errorData.containsKey('errors')) {
             final errors = Map<String, List<String>>.from(
-              errorData['errors'].map((key, value) => MapEntry(
-                key,
-                List<String>.from(value),
-              )),
+              errorData['errors'].map(
+                (key, value) => MapEntry(key, List<String>.from(value)),
+              ),
             );
             return ApiResponse.validationError(errors);
           }
@@ -99,9 +97,7 @@ class AuthService {
     try {
       final response = await _client.post(
         Uri.parse('$_baseUrl/refresh-token'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': refreshToken}),
       );
 

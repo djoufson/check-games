@@ -42,19 +42,19 @@ class SessionService {
   }
 
   Map<String, String> get _headers {
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-    
+    final headers = <String, String>{'Content-Type': 'application/json'};
+
     if (_accessToken != null && _accessToken!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_accessToken';
     }
-    
+
     return headers;
   }
 
   /// Create a new game session
-  Future<ApiResponse<CreateSessionResponse>> createSession(CreateSessionRequest request) async {
+  Future<ApiResponse<CreateSessionResponse>> createSession(
+    CreateSessionRequest request,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/sessions'),
@@ -62,12 +62,18 @@ class SessionService {
         body: jsonEncode(request.toJson()),
       );
 
-      debugPrint('SessionService: Create session response status: ${response.statusCode}');
-      debugPrint('SessionService: Create session response body: ${response.body}');
+      debugPrint(
+        'SessionService: Create session response status: ${response.statusCode}',
+      );
+      debugPrint(
+        'SessionService: Create session response body: ${response.body}',
+      );
 
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-        return ApiResponse.success(CreateSessionResponse.fromJson(responseData));
+        return ApiResponse.success(
+          CreateSessionResponse.fromJson(responseData),
+        );
       } else if (response.statusCode == 400) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
         if (errorData.containsKey('errors')) {
@@ -78,15 +84,21 @@ class SessionService {
           });
           return ApiResponse.validationError(validationErrors);
         }
-        return ApiResponse.error(errorData['message'] as String? ?? 'Validation failed');
+        return ApiResponse.error(
+          errorData['message'] as String? ?? 'Validation failed',
+        );
       } else if (response.statusCode == 401) {
         return ApiResponse.error('Authentication required');
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>?;
-        return ApiResponse.error(errorData?['message'] as String? ?? 'Failed to create session');
+        return ApiResponse.error(
+          errorData?['message'] as String? ?? 'Failed to create session',
+        );
       }
     } on SocketException {
-      return ApiResponse.error('Network connection failed. Please check your internet connection.');
+      return ApiResponse.error(
+        'Network connection failed. Please check your internet connection.',
+      );
     } on FormatException {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
@@ -103,7 +115,9 @@ class SessionService {
         headers: _headers,
       );
 
-      debugPrint('SessionService: Get session response status: ${response.statusCode}');
+      debugPrint(
+        'SessionService: Get session response status: ${response.statusCode}',
+      );
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -114,10 +128,14 @@ class SessionService {
         return ApiResponse.error('Authentication required');
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>?;
-        return ApiResponse.error(errorData?['message'] as String? ?? 'Failed to get session');
+        return ApiResponse.error(
+          errorData?['message'] as String? ?? 'Failed to get session',
+        );
       }
     } on SocketException {
-      return ApiResponse.error('Network connection failed. Please check your internet connection.');
+      return ApiResponse.error(
+        'Network connection failed. Please check your internet connection.',
+      );
     } on FormatException {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
@@ -127,7 +145,9 @@ class SessionService {
   }
 
   /// Join a session using session code
-  Future<ApiResponse<GameSession>> joinSession(JoinSessionRequest request) async {
+  Future<ApiResponse<GameSession>> joinSession(
+    JoinSessionRequest request,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/sessions/join'),
@@ -135,7 +155,9 @@ class SessionService {
         body: jsonEncode(request.toJson()),
       );
 
-      debugPrint('SessionService: Join session response status: ${response.statusCode}');
+      debugPrint(
+        'SessionService: Join session response status: ${response.statusCode}',
+      );
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -150,7 +172,9 @@ class SessionService {
           });
           return ApiResponse.validationError(validationErrors);
         }
-        return ApiResponse.error(errorData['message'] as String? ?? 'Failed to join session');
+        return ApiResponse.error(
+          errorData['message'] as String? ?? 'Failed to join session',
+        );
       } else if (response.statusCode == 404) {
         return ApiResponse.error('Session not found');
       } else if (response.statusCode == 409) {
@@ -159,10 +183,14 @@ class SessionService {
         return ApiResponse.error('Authentication required');
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>?;
-        return ApiResponse.error(errorData?['message'] as String? ?? 'Failed to join session');
+        return ApiResponse.error(
+          errorData?['message'] as String? ?? 'Failed to join session',
+        );
       }
     } on SocketException {
-      return ApiResponse.error('Network connection failed. Please check your internet connection.');
+      return ApiResponse.error(
+        'Network connection failed. Please check your internet connection.',
+      );
     } on FormatException {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
@@ -179,7 +207,9 @@ class SessionService {
         headers: _headers,
       );
 
-      debugPrint('SessionService: Leave session response status: ${response.statusCode}');
+      debugPrint(
+        'SessionService: Leave session response status: ${response.statusCode}',
+      );
 
       if (response.statusCode == 200) {
         return ApiResponse.success(null);
@@ -189,10 +219,14 @@ class SessionService {
         return ApiResponse.error('Authentication required');
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>?;
-        return ApiResponse.error(errorData?['message'] as String? ?? 'Failed to leave session');
+        return ApiResponse.error(
+          errorData?['message'] as String? ?? 'Failed to leave session',
+        );
       }
     } on SocketException {
-      return ApiResponse.error('Network connection failed. Please check your internet connection.');
+      return ApiResponse.error(
+        'Network connection failed. Please check your internet connection.',
+      );
     } on FormatException {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {
@@ -209,14 +243,18 @@ class SessionService {
         headers: _headers,
       );
 
-      debugPrint('SessionService: Start session response status: ${response.statusCode}');
+      debugPrint(
+        'SessionService: Start session response status: ${response.statusCode}',
+      );
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         return ApiResponse.success(GameSession.fromJson(responseData));
       } else if (response.statusCode == 400) {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>;
-        return ApiResponse.error(errorData['message'] as String? ?? 'Cannot start session');
+        return ApiResponse.error(
+          errorData['message'] as String? ?? 'Cannot start session',
+        );
       } else if (response.statusCode == 403) {
         return ApiResponse.error('Only the host can start the session');
       } else if (response.statusCode == 404) {
@@ -225,10 +263,14 @@ class SessionService {
         return ApiResponse.error('Authentication required');
       } else {
         final errorData = jsonDecode(response.body) as Map<String, dynamic>?;
-        return ApiResponse.error(errorData?['message'] as String? ?? 'Failed to start session');
+        return ApiResponse.error(
+          errorData?['message'] as String? ?? 'Failed to start session',
+        );
       }
     } on SocketException {
-      return ApiResponse.error('Network connection failed. Please check your internet connection.');
+      return ApiResponse.error(
+        'Network connection failed. Please check your internet connection.',
+      );
     } on FormatException {
       return ApiResponse.error('Invalid response format from server');
     } catch (e) {

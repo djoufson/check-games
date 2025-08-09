@@ -22,7 +22,7 @@ public class ConnectionCacheService(
 
             // Get existing connections for the user
             var existingConnections = await GetConnectionsAsync(userId);
-            
+
             // Add new connection if not already present
             if (!existingConnections.Contains(connectionId))
             {
@@ -51,7 +51,7 @@ public class ConnectionCacheService(
 
             // Get existing connections for the user
             var existingConnections = await GetConnectionsAsync(userId);
-            
+
             // Remove the connection
             if (existingConnections.Remove(connectionId))
             {

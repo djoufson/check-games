@@ -74,7 +74,7 @@ public static class Extensions
         // Add Redis distributed cache
         var redisCacheOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>() ?? new RedisCacheOptions();
         var redisConnectionString = redisCacheOptions.ConnectionString ?? configuration.GetConnectionString("Redis") ?? "localhost:6379";
-        
+
         services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = redisConnectionString;

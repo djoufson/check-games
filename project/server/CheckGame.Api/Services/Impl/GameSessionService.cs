@@ -293,7 +293,7 @@ public class GameSessionService : IGameSessionService
         {
             // Get all active connections for the authenticated user
             var userConnections = await _connectionCacheService.GetConnectionsAsync(userId);
-            
+
             if (userConnections.Count == 0)
             {
                 _logger.LogDebug("No active connections found for user {UserId} to add to session {SessionId}", userId, sessionId);
@@ -305,11 +305,11 @@ public class GameSessionService : IGameSessionService
             foreach (var connectionId in userConnections)
             {
                 await _hubContext.Groups.AddToGroupAsync(connectionId, groupName);
-                _logger.LogDebug("Added connection {ConnectionId} for user {UserId} to SignalR group {GroupName}", 
+                _logger.LogDebug("Added connection {ConnectionId} for user {UserId} to SignalR group {GroupName}",
                     connectionId, userId, groupName);
             }
 
-            _logger.LogInformation("Added {ConnectionCount} connections for user {UserId} to session group {SessionId}", 
+            _logger.LogInformation("Added {ConnectionCount} connections for user {UserId} to session group {SessionId}",
                 userConnections.Count, userId, sessionId);
         }
         catch (Exception ex)
