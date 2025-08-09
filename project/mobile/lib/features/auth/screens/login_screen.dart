@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text('CheckGame', style: AppTypography.gameLogo),
+                    Text('Check Games', style: AppTypography.gameLogo),
                   ],
                 ),
               ),

@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'CheckGame',
+          'Check Games',
           style: AppTypography.headlineMedium.copyWith(
             color: AppColors.white,
             fontWeight: FontWeight.bold,

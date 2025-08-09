@@ -22,7 +22,7 @@ class CheckGameApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => SignalRProvider()),
       ],
       child: MaterialApp(
-        title: 'CheckGame',
+        title: 'Check Games',
         theme: AppTheme.light,
         home: const AuthWrapper(),
         routes: {

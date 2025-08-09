@@ -157,7 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Join CheckGame!',
+                'Join Check Games!',
                 style: AppTypography.displayMedium.copyWith(
                   color: AppColors.primary,
                 ),

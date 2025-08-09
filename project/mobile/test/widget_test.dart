@@ -11,7 +11,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that we can see login elements (since no user is authenticated)
-    expect(find.text('CheckGame'), findsOneWidget);
+    expect(find.text('Check Games'), findsOneWidget);
     expect(find.text('Welcome Back!'), findsOneWidget);
   });
 }
